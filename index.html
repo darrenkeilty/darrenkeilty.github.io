@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Darren Keilty - Portfolio</title>
+    <style>
+        /* Global styles */
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: #e8eef1;
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+        }
+
+        /* Banner Section */
+        .banner {
+            position: relative;
+            background-image: url('banner.jpg');
+            height: 400px;
+            background-position: center;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 8px solid #4b6b82;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Navigation links on banner */
+        .navbar {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: bold;
+            margin-left: 20px;
+            padding: 5px 10px;
+            transition: color 0.3s ease;
+        }
+
+        .navbar a:hover {
+            color: #c3cfd9;
+        }
+
+
+        /* Section below the banner */
+        .content {
+            display: flex;
+            justify-content: space-between;
+            padding: 80px 100px;
+            max-width: 1200px;
+            margin: 0 auto;
+            gap: 50px;
+        }
+
+        /* Left column for profile image */
+        .left-column {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Right column "About Me" */
+        .right-column {
+            flex: 2;
+        }
+
+        /* Styling for profile image */
+        .profile-image {
+            border-radius: 10px;
+            max-width: 100%;
+            height: auto;
+            border: 5px solid #4b6b82;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Styling for "About Me" */
+        .about-me {
+            background-color: #fff;
+            padding: 50px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            line-height: 1.8;
+        }
+
+        /* Styling for paragraph text */
+        p {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #4b4b4b;
+            text-align: left;
+        }
+
+        /* Button styling */
+        .projects-button {
+            display: inline-block;
+            background-color: #4b6b82;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .projects-button:hover {
+            background-color: #395466;
+            transform: translateY(-5px);
+        }
+
+        /* Media queries for responsiveness */
+        @media (max-width: 992px) {
+            .content {
+                flex-direction: column;
+                padding: 50px 40px;
+            }
+            .left-column, .right-column {
+                flex: unset;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .banner {
+                height: 300px;
+            }
+            .about-me {
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">
+        <!-- Navigation Links -->
+        <div class="navbar">
+            <a href="index.html">Home</a>
+            <a href="about">About</a>
+            <a href="projects.html">Projects</a>
+            <a href="resume.pdf" target="_blank">Resume</a>
+        </div>
+        <!-- Banner content  -->
+    </div>
+
+    <!-- Content section -->
+    <div class="content">
+        <!-- Left column with profile image -->
+        <div class="left-column">
+            <img src="tmp.jpg" alt="Darren Keilty" class="profile-image">
+        </div>
+
+        <!-- Right column with "About Me" content -->
+        <div class="right-column">
+            <div class="about-me">
+                <p>
+                    Hi! I'm Darren, a 5<sup>th</sup> year student at the University of Calgary, pursuing a dual degree in Computer Science and Business Analytics.
+                </p>
+                <p>
+                    I'm passionate about solving complex problems and exploring the intersection of technology and business. Check out some of the projects I've been working on:
+                </p>
+                <!-- My Projects Button -->
+                <a href="projects.html" class="projects-button">View My Projects</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
