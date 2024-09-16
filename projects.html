@@ -14,17 +14,42 @@
             color: #333;
         }
 
+        /* Navigation links on banner */
+        .navbar {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+        }
+
+        .navbar a {
+            color:#9cb4c0;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: 'Segoe UI', sans-serif;
+            margin-left: 20px;
+            padding: 5px 10px;
+            transition: color 0.3s ease;
+        }
+
+        .navbar a:hover {
+            color: #c3cfd9;
+        }
+
         /* Header */
         .header {
             text-align: center;
             padding: 50px;
-            background-color: #4b6b82;
-            color: white;
+            background-color: #1d2c38;
+            background-image: url(Banner2.PNG);
+            color: #9cb4c0;
         }
 
         .header h1 {
+            padding: 10px;
+            font-family:'Segoe UI', sans-serif;
             margin: 0;
-            font-size: 36px;
+            font-size: 40px;
         }
 
         /* Projects Section */
@@ -101,11 +126,21 @@
     </style>
 </head>
 <body>
+    <div class="banner">
+        <!-- Navigation Links -->
+        <div class="navbar">
+            <a href="index.html">Home</a>
+            <a href="about">About</a>
+            <a href="projects.html">Projects</a>
+            <a href="resume.pdf" target="_blank">Resume</a>
+        </div>
+        <!-- Banner content  -->
+    </div>
 
     <!-- Header Section -->
     <div class="header">
         <h1>My Projects</h1>
-        <p>Explore some of the projects I've worked on recently</p>
+        <p>Take a look at some of my more recent work</p>
     </div>
 
     <!-- Projects Section -->
