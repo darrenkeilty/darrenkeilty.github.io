@@ -100,13 +100,26 @@
       background-color: #395466;
     }
 
-    .visuals img {
-      width: 100%;
-      max-width: 100%;
-      border-radius: 10px;
-      margin-top: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    .visuals {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Always 2 per row */
+    gap: 40px;
+    margin-top: 40px;
+    padding: 0 20px;
     }
+
+    .visuals img {
+    width: 100%;
+    height: auto;
+    max-height: 350px; /* Prevents super tall images */
+    border-radius: 10px;
+    object-fit: contain;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    }
+
+
+
 
     footer {
       text-align: center;
@@ -173,7 +186,9 @@
     <div class="visuals">
       <img src="q1-visual.png" alt="Satisfaction Factors by Frequency">
       <img src="q2-visual.png" alt="Industry Satisfaction Breakdown">
-      <img src="q3-visual.png" alt="Attrition Predictors Analysis">
+      <img src="q3-visual.png" alt="Attrition Remote Work Proportions">
+      <img src="q3.2-visual.png" alt="Attrition Predictors Analysis">
+
     </div>
   </div>
 
