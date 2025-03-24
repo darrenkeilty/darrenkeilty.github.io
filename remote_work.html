@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Remote Work Project - Darren Keilty</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      background-color: #e8eef1;
+      font-family: 'Lora', serif;
+      color: #333;
+    }
+
+    /* Navbar */
+    .navbar {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+    }
+
+    .navbar a {
+      color: #9cb4c0;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: bold;
+      font-family: 'Segoe UI', sans-serif;
+      margin-left: 20px;
+      padding: 5px 10px;
+      transition: color 0.3s ease;
+    }
+
+    .navbar a:hover {
+      color: #c3cfd9;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 60px 20px;
+      background-color: #1d2c38;
+      background-image: url(Banner2.PNG);
+      background-position: center;
+      background-size: cover;
+      color: #9cb4c0;
+      position: relative;
+    }
+
+    .header h1 {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 40px;
+      margin: 0;
+      padding: 10px;
+    }
+
+    .header p {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 18px;
+      margin: 10px 0 0;
+    }
+
+    /* Section */
+    .section {
+      max-width: 1000px;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+
+    .section h2 {
+      color: #4b6b82;
+      font-family: 'Segoe UI', sans-serif;
+      margin-bottom: 20px;
+    }
+
+    .section p, li {
+      font-size: 16px;
+      line-height: 1.8;
+      color: #444;
+    }
+
+    .downloads {
+      margin: 30px 0;
+    }
+
+    .downloads a {
+      display: inline-block;
+      background-color: #4b6b82;
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 30px;
+      margin-right: 15px;
+      font-weight: bold;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+
+    .downloads a:hover {
+      background-color: #395466;
+    }
+
+    .visuals img {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 10px;
+      margin-top: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .section {
+        padding: 0 15px;
+      }
+      .navbar {
+        top: 15px;
+        right: 15px;
+      }
+      .downloads a {
+        margin-top: 10px;
+        display: block;
+        margin-right: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <div class="navbar">
+    <a href="index.html">Home</a>
+    <a href="#about">About</a>
+    <a href="projects.html">Projects</a>
+    <a href="resume.pdf" target="_blank">Resume</a>
+  </div>
+
+  <!-- Banner Header -->
+  <div class="header">
+    <h1>Remote Work Satisfaction Study</h1>
+    <p>BTMA 431 Final Project</p>
+  </div>
+
+  <!-- Main Content -->
+  <div class="section">
+    <h2>Overview</h2>
+    <p><em>By Darren Keilty, Bryce Corrin, Kiegan Groot, Ammar Khan</em></p>
+
+    <p>
+      This project analyzes job satisfaction and retention in remote work environments using statistical analysis in R.
+      We scraped thousands of reviews, surveyed professionals across multiple industries, and built regression models to understand key satisfaction and attrition drivers.
+    </p>
+
+    <ul>
+      <li>📊 Identified top factors like flexibility, support, and work-life balance.</li>
+      <li>👥 Compared trends across age groups and seniority levels.</li>
+      <li>📉 Measured correlation between remote flexibility and attrition risk.</li>
+    </ul>
+
+    <div class="downloads">
+      <a href="Final%20Project%20Report.docx" download>📄 Full Report</a>
+      <a href="BTMA%20431%20Presentation.pptx" download>📊 Presentation</a>
+      <a href="BTMA%20431%20Final%20Project%20Code%20L02.R" download>💻 R Code</a>
+    </div>
+
+    <h2>Sample Visuals</h2>
+    <div class="visuals">
+      <img src="q1-visual.png" alt="Satisfaction Factors by Frequency">
+      <img src="q2-visual.png" alt="Industry Satisfaction Breakdown">
+      <img src="q3-visual.png" alt="Attrition Predictors Analysis">
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2025 Darren Keilty. All rights reserved.
+  </footer>
+
+</body>
+</html>
