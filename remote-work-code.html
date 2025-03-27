@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>R Code Viewer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
+  <style>
+    body {
+      background-color: #1e1e1e;
+      color: #eee;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 30px;
+    }
+    pre {
+      padding: 20px;
+      background-color: #2d2d2d;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    h1 {
+      color: #9cb4c0;
+    }
+    a {
+      color: #9cb4c0;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>BTMA 431 Final Project – R Code</h1>
+  <p><a href="remote-work.html">← Back to Project Page</a></p>
+  <pre><code class="language-r">
+    # BTMA 431 - Final Project Code
+    # Darren Keilty, Bryce Corrin
+
+    # --- Q1 CODE BELOW ---
+
+    # Primary Question: What are the most common factors affecting job satisfaction among remote workers?
+
+    # Install and load the required library
+    install.packages("rvest")
+    library(rvest)
+    library(dplyr)
+    library(readr)
+
+    # Listing HTML files to be scraped (extracted from various Indeed reviews filtered by Remote Work, all saved in working directory)
+    html_files <- c(
+    "Working at The Walt Disney Company_ 3,960 Reviews _ Indeed.html",
+    "Working at Amazon.com in Remote_ 1,391 Reviews _ Indeed.com.html",
+    "Working at Conduent in Remote_ 1,154 Reviews _ Indeed.com.html",
+    "Working at Rev in Remote_ 630 Reviews _ Indeed.com.html",
+    "Working at Remote Work_ Employee Reviews _ Indeed.com.html",
+    "Working at Remote Staff_ Employee Reviews _ Indeed.com.html",
+    "Working at Indeed in Remote_ 126 Reviews _ Indeed.com.html",
+    "Working at Intuit in Remote_ 471 Reviews _ Indeed.com.html",
+    "Working at Concentrix in Remote_ 1,833 Reviews _ Indeed.com.html",
+    "Working at Apple in Remote_ 624 Reviews _ Indeed.com.html",
+    "Working at Randstad in Remote_ 236 Reviews _ Indeed.com.html"
+    )
+
+    # Define a function to extract reviews from an HTML file
+    extract_reviews_from_html <- function(file) {
+    # Read the HTML file
+    page <- read_html(file)
+    
+    # Extract reviews using a CSS selector
+    reviews <- page %>%
+        html_nodes("span") %>%  # General selector
+        html_text()
+    
+    return(reviews)
+    }
+
+    # Extract reviews from all HTML files
+    all_reviews <- lapply(html_files, extract_reviews_from_html)
+
+    # Combine into a single data frame
+    review_data <- data.frame(Review = unlist(all_reviews), stringsAsFactors = FALSE)
+
+    # Save the reviews to a CSV file
+    write_csv(review_data, "manually_scraped_reviews.csv")
+
+    # Print a few reviews
+    print(head(review_data))
+
+    # Install necessary packages
+    install.packages("tidytext")
+    library(tidytext)
+    library(stringr)
+
+    # Combine reviews into a single text dataset
+    all_text <- paste(review_data$Review, collapse = " ")
+
+    # Create a tidy text dataset
+    tidy_text <- tibble(text = all_text) %>%
+    unnest_tokens(word, text)
+
+    # Define target phrases / satisfaction factors
+    phrases <- c("flexibility", "support", "work-life balance", 
+                "career advancement", "culture",
+                "collaboration", "pay", "benefits")
+
+    # Count occurrences of each phrase / satisfaction factor in the text
+    phrase_counts <- tibble(phrase = phrases) %>%
+    rowwise() %>%
+    mutate(count = str_count(all_text, fixed(phrase, ignore_case = TRUE)))
+
+    # Convert to a data frame and save to a CSV
+    phrase_counts <- as.data.frame(phrase_counts)
+    write_csv(phrase_counts, "phrase_counts.csv")
+
+    # Print the phrase / satisfaction factor counts
+    print(phrase_counts)
+
+    library(ggplot2)
+
+    # Create a line chart of phrase / satisfaction factor frequencies
+    ggplot(phrase_counts, aes(x = reorder(phrase, count), y = count, group = 1)) +
+    geom_line(color = "steelblue", size = 1) +
+    geom_point(color = "steelblue", size = 3) +
+    labs(title = "Key Factors Affecting Remote Work Satisfaction",
+        x = "Satisfaction Factors",
+        y = "Frequency") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+    # Follow-up question: How do specific satisfaction factors vary in importance among different age groups or seniority levels?
+
+    # Utilize reviews from the primary question
+
+    # Define Seniority Levels and Age Groups 
+    set.seed(42)  # For reproducibility
+    # Sampling for seniority and age groups
+    seniority <- sample(c("Junior", "Mid-Level", "Senior"), size = nrow(review_data), replace = TRUE, prob = c(0.3, 0.5, 0.2))
+    age <- sample(c("20-30", "30-40", "40+"), size = nrow(review_data), replace = TRUE, prob = c(0.4, 0.4, 0.2))
+
+    # Group reviewers into distinct Seniority Levels and Age Groups
+    review_data <- review_data %>%
+    mutate(SeniorityLevel = case_when(
+        str_detect(Review, "(?i)CEO|CFO|senior advisor|senior manager|sr. program manager|software engineering manager|director|executive") ~ "Senior",
+        str_detect(Review, "(?i)manager|project manager|claims manager|regional maintenance manager|associate product manager|team lead|coordinator|specialist|analyst|software engineer") ~ "Mid-Level",
+        str_detect(Review, "(?i)intern|junior|assistant|trainee|entry-level|customer service representative|freelance recruiter|virtual assistant") ~ "Junior",
+        TRUE ~ seniority[row_number()]
+    )) %>%
+    mutate(AgeGroup = case_when(
+        str_detect(Review, "(?i)20s|young|early career|college grad|student|just starting out|beginning my career|first job|millennial|gen z") ~ "20-30",
+        str_detect(Review, "(?i)30s|mid-career|established professional|gaining experience|building my career|settling into my role|balancing family and work") ~ "30-40",
+        str_detect(Review, "(?i)40s|50s|veteran|experienced|long career|seasoned|older professional|mature workforce|tenured|career stability|approaching retirement|generation x|baby boomer") ~ "40+",
+        TRUE ~ age[row_number()]
+    ))
+
+    # Tokenize reviews and filter for satisfaction factors
+    tidy_reviews <- review_data %>%
+    unnest_tokens(word, Review) %>%
+    filter(word %in% str_to_lower(phrases)) %>%
+    mutate(word = str_to_lower(word))
+
+    # Group by Seniority Level
+    seniority_frequencies <- tidy_reviews %>%
+    group_by(SeniorityLevel, word) %>%
+    summarize(count = n(), .groups = "drop")
+
+    # Group by Age Group
+    age_group_frequencies <- tidy_reviews %>%
+    group_by(AgeGroup, word) %>%
+    summarize(count = n(), .groups = "drop")
+
+    # Visualization: Remote Work Satisfaction Factors by Seniority Level
+    ggplot(seniority_frequencies, aes(x = word, y = count, fill = SeniorityLevel)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title = "Remote Work Satisfaction Factors by Seniority Level",
+        x = "Satisfaction Factor",
+        y = "Frequency",
+        fill = "Seniority Level") +
+    theme_minimal()
+
+    # Visualization: Remote Work Satisfaction Factors by Age Group
+    ggplot(age_group_frequencies, aes(x = word, y = count, fill = AgeGroup)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title = "Remote Work Satisfaction Factors by Age Group",
+        x = "Satisfaction Factor",
+        y = "Frequency",
+        fill = "Age Group") +
+    theme_minimal()
+
+    # Save updated review data and frequencies
+    write_csv(review_data, "classified_reviews.csv")
+    write_csv(seniority_frequencies, "seniority_frequencies.csv")
+    write_csv(age_group_frequencies, "age_group_frequencies.csv")
+
+
+
+    # --- Q2 CODE BELOW --
+
+    # Install and load applicable libraries 
+    install.packages("readr")
+    library(readr)
+    library(dplyr)
+    library(tidyverse)
+    library(ggplot2)
+
+    # Retrieve data using Kaggle API
+    # **Note** need valid Kaggle API key in working directory for data retrieval
+    Sys.setenv(KAGGLE_CONFIG_DIR = getwd())
+
+    # Download the datasets
+    system("kaggle datasets download -d melodyyiphoiching/remote-working-survey --force")
+
+    # Unzip datasets
+    unzip("remote-working-survey.zip", exdir = getwd())
+
+    # Load the datasets with specified encoding
+    data_2020 <- read_csv("2020_rws.csv", locale = locale(encoding = "ISO-8859-1"))
+    data_2021 <- read_csv("2021_rws.csv", locale = locale(encoding = "ISO-8859-1"))
+
+    # Add a column to identify the year of each dataset
+    data_2020 <- data_2020 %>% mutate(Year = 2020)
+    data_2021 <- data_2021 %>% mutate(Year = 2021)
+
+    # Combine the datasets
+    combined_data <- bind_rows(data_2020, data_2021)
+
+    # Save the combined dataset to a CSV file
+    write_csv(combined_data, "combined_remote_work_survey.csv")
+
+    # Install and load janitor for cleaning column names
+    install.packages("janitor")
+    library(janitor)
+
+    # Clean the column names
+    cleaned_data <- combined_data %>%
+    clean_names()
+
+    # Primary question: How does remote work satisfaction vary across industries? 
+
+    # Select relevant columns for analysis
+    relevant_data <- cleaned_data %>%
+    select(
+        Industry = `which_of_the_following_best_describes_your_industry`,
+        JobRole = `which_of_the_following_best_describes_your_current_occupation`,
+        SatisfactionPolicy = `how_do_you_feel_about_your_employer_s_remote_working_policy`,
+        SatisfactionPositive = `do_you_think_remote_working_is_a_positive_or_a_negative_for_your_employer`
+    )
+
+    # Data cleaning: Remove rows with missing or unclear responses
+    cleaned_data <- relevant_data %>%
+    filter(
+        !is.na(Industry),
+        !is.na(SatisfactionPolicy) | !is.na(SatisfactionPositive)
+    )
+
+    # Convert satisfaction ratings and additional metrics to numeric values for analysis
+    cleaned_data <- cleaned_data %>%
+    mutate(
+        # Convert SatisfactionPolicy to numeric
+        SatisfactionPolicyNumeric = case_when(
+        SatisfactionPolicy == "Strongly Positive" ~ 5,
+        SatisfactionPolicy == "Somewhat Positive" ~ 4,
+        SatisfactionPolicy == "Neither positive nor negative" ~ 3,
+        SatisfactionPolicy == "Somewhat Negative" ~ 2,
+        SatisfactionPolicy == "Strongly Negative" ~ 1,
+        TRUE ~ NA_real_
+        ),
+        # Convert SatisfactionPositive to numeric
+        SatisfactionPositiveNumeric = case_when(
+        SatisfactionPositive == "Strongly Positive" ~ 5,
+        SatisfactionPositive == "Somewhat Positive" ~ 4,
+        SatisfactionPositive == "Neither positive nor negative" ~ 3,
+        SatisfactionPositive == "Somewhat Negative" ~ 2,
+        SatisfactionPositive == "Strongly Negative" ~ 1,
+        TRUE ~ NA_real_
+        )
+    )
+
+    # Aggregate satisfaction by industry (including new metrics)
+    satisfaction_by_industry <- cleaned_data %>%
+    group_by(Industry) %>%
+    summarize(
+        AvgPolicySatisfaction = mean(SatisfactionPolicyNumeric, na.rm = TRUE),
+        AvgPositiveSatisfaction = mean(SatisfactionPositiveNumeric, na.rm = TRUE),
+        Count = n()
+    ) %>%
+    arrange(desc(AvgPolicySatisfaction))
+
+    # Identify top industries by satisfaction (filtered by AvgPolicySatisfaction > 4)
+    top_industries <- satisfaction_by_industry %>%
+    filter(AvgPolicySatisfaction > 4)
+
+    # Visualization: Satisfaction by Industry (Filtered for >4)
+    ggplot(top_industries, aes(x = reorder(Industry, AvgPolicySatisfaction), y = AvgPolicySatisfaction)) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    coord_flip() +
+    labs(
+        title = "High Remote Work Satisfaction by Industry",
+        x = "Industry",
+        y = "Average Policy Satisfaction"
+    ) +
+    theme_minimal()
+
+    # Filter data for high-satisfaction industries
+    high_satisfaction_data <- cleaned_data %>%
+    filter(Industry %in% top_industries$Industry)
+
+    # Follow-up question: Aggregate satisfaction by job role within high-satisfaction industries
+    satisfaction_by_job_role <- high_satisfaction_data %>%
+    group_by(Industry, JobRole) %>%
+    summarize(
+        AvgPolicySatisfaction = mean(SatisfactionPolicyNumeric, na.rm = TRUE),
+        AvgPositiveSatisfaction = mean(SatisfactionPositiveNumeric, na.rm = TRUE),
+        Count = n()
+    ) %>%
+    arrange(desc(AvgPolicySatisfaction))
+
+    # Select the top job role per industry
+    top_role_per_industry <- satisfaction_by_job_role %>%
+    filter(!is.na(JobRole), AvgPolicySatisfaction > 4) %>% # Filter scores > 4
+    group_by(Industry) %>%
+    slice_max(AvgPolicySatisfaction, n = 1, with_ties = FALSE) %>% # Ensure only one top role per industry
+    ungroup()
+
+    # Horizontal bar chart for top job roles by satisfaction
+    ggplot(top_role_per_industry, aes(x = AvgPolicySatisfaction, y = reorder(JobRole, AvgPolicySatisfaction), fill = Industry)) +
+    geom_bar(stat = "identity") +
+    labs(
+        title = "Top Job Role by Satisfaction in Each High-Satisfaction Industry",
+        x = "Average Policy Satisfaction",
+        y = "Job Role",
+        fill = "Industry"
+    ) +
+    theme_minimal() +
+    theme(
+        legend.position = "bottom",                 # Move legend to bottom for better layout
+        axis.text.y = element_text(size = 10),      # Adjust font size for readability
+        axis.text.x = element_text(size = 10)
+    )
+
+    # DEBUG: Check satisfaction_by_industry and satisfaction_by_job_role
+    print(head(satisfaction_by_industry))
+    print(head(satisfaction_by_job_role))
+
+    # Save outputs to CSV files for further analysis
+    write_csv(satisfaction_by_industry, "satisfaction_by_industry.csv")
+    write_csv(satisfaction_by_job_role, "satisfaction_by_job_role.csv")
+
+
+
+    # --- Q3 CODE BELOW ---
+
+    # Install required packages
+    install.packages("car")
+    install.packages("tibble")
+    install.packages("plotly")
+
+    # Load required libraries
+    library(readr)
+    library(dplyr)
+    library(ggplot2)
+    library(stringr)
+    library(car)
+    library(tibble)
+    library(plotly)
+
+    # Retrieve data using Kaggle API
+    # **Note** need valid Kaggle API key in working directory for data retrieval
+    Sys.setenv(KAGGLE_CONFIG_DIR = getwd())
+
+    # Download the dataset
+    system("kaggle datasets download -d stealthtechnologies/employee-attrition-dataset --force")
+
+    # Unzip dataset
+    unzip("employee-attrition-dataset.zip", exdir = getwd())
+
+    # Read Training Data
+    AttritionData <- read.csv("train.csv")
+
+    # Read Testing Data
+    AttritionDataTest <- read.csv("test.csv")
+
+    # Process training data
+    # Remove Employee ID, not useful for our analysis
+    AttritionData <- AttritionData %>% select(-1)
+
+    # Remove any rows with missing values
+    AttritionData <- na.omit(AttritionData)
+
+    # Check for duplicate rows
+    sum(duplicated(AttritionData))
+
+    # Convert categorical columns to factors
+    AttritionData[] <- lapply(AttritionData, function(col) {
+    if (!is.numeric(col)) {
+        as.factor(col)
+    } else {
+        col
+    }
+    })
+
+    # Relevel factors to base levels that make the most sense.
+    AttritionData$Job.Satisfaction <- relevel(AttritionData$Job.Satisfaction, ref = "Medium")
+    AttritionData$Work.Life.Balance <- relevel(AttritionData$Work.Life.Balance, ref = "Good")
+    AttritionData$Company.Reputation <- relevel(AttritionData$Company.Reputation, ref = "Good")
+    AttritionData$Job.Level <- relevel(AttritionData$Job.Level, ref = "Mid")
+    AttritionData$Performance.Rating <- relevel(AttritionData$Performance.Rating, ref = "Average")
+    AttritionData$Employee.Recognition <- relevel(AttritionData$Employee.Recognition, ref = "Medium")
+
+    # Do the same with the testing dataset
+
+    # Remove Employee ID, not useful for our analysis
+    AttritionDataTest <- AttritionDataTest %>% select(-1)
+
+    # Remove any rows with missing values
+    AttritionDataTest <- na.omit(AttritionDataTest)
+
+
+    # Check for duplicate rows
+    sum(duplicated(AttritionDataTest))
+
+    # Convert categorical columns to factors
+    AttritionDataTest[] <- lapply(AttritionDataTest, function(col) {
+    if (!is.numeric(col)) {
+        as.factor(col)
+    } else {
+        col
+    }
+    })
+
+    # Relevel factors to base levels that make the most sense.
+    AttritionDataTest$Job.Satisfaction <- relevel(AttritionDataTest$Job.Satisfaction, ref = "Medium")
+    AttritionDataTest$Work.Life.Balance <- relevel(AttritionDataTest$Work.Life.Balance, ref = "Good")
+    AttritionDataTest$Company.Reputation <- relevel(AttritionDataTest$Company.Reputation, ref = "Good")
+    AttritionDataTest$Job.Level <- relevel(AttritionDataTest$Job.Level, ref = "Mid")
+    AttritionDataTest$Performance.Rating <- relevel(AttritionDataTest$Performance.Rating, ref = "Average")
+    AttritionDataTest$Employee.Recognition <- relevel(AttritionDataTest$Employee.Recognition, ref = "Medium")
+
+
+    # Primary Question: Is there a correlation between remote work and attrition?
+
+    # Create a contingency table for Remote.Work and Attrition
+    contingency_table <- table(AttritionData$Remote.Work, AttritionData$Attrition)
+
+    # Perform chi-squared test
+    chisq_test <- chisq.test(contingency_table)
+    # This means that there is a statistically significant relationship between remote work and attrition.
+    print(chisq_test)
+
+    fit1 <- glm(Attrition ~ Remote.Work, data = AttritionData,
+                family = binomial(link = "logit"))
+
+    # This is consistent with out calculated probabilities in prop table. If the employee works remotely they are more likely to stay (positive coefficient)
+    summary(fit1)
+
+    # Proportion check for relative frequency of Remote.Work and Attrition
+    prop.table(table(AttritionData$Remote.Work, AttritionData$Attrition), 1)
+
+    # Visualize the relationship between Remote.Work and Attrition
+    print(
+    ggplot(AttritionData, aes(x = Remote.Work, fill = Attrition)) +
+        geom_bar(position = "fill") +
+        labs(title = "Attrition by Remote Work", y = "Proportion", x = "Remote Work"))
+
+
+    # Follow-up Question: What other factors could influence employee attrition, and how do they compare to the impact of remote work flexibility?
+    # logistic regression analysis to identify other important factors that would most likely influence attrition.
+    # Run first with test data
+    model_1_test <- glm(Attrition ~ Remote.Work + Job.Satisfaction + 
+                        Monthly.Income  + Work.Life.Balance + Job.Level +
+                        Performance.Rating + Number.of.Promotions + Leadership.Opportunities +
+                        + Company.Reputation + Overtime + Distance.from.Home + Employee.Recognition,
+                        data = AttritionDataTest,
+                        family = binomial(link = "logit")
+    )
+
+    # Vif scores look good.
+    vif(model_1_test)
+
+    # Run with training data
+    model_1 <- glm(Attrition ~ Remote.Work + Job.Satisfaction + 
+                    Monthly.Income  + Work.Life.Balance + Job.Level +
+                    Performance.Rating + Number.of.Promotions + Leadership.Opportunities +
+                    + Company.Reputation + Overtime + Distance.from.Home + Employee.Recognition,
+                data = AttritionData,
+                family = binomial(link = "logit")
+    )
+
+    # Comparing the two summaries, nothing suggests overfitting. Coefficients are decently consistant
+    # between models, as are the significance levels.
+    summary(model_1_test)
+    summary(model_1)
+
+    # vif scores look good in the training set as well
+    vif(model_1)
+
+    # Extract coefficients and p-values from model summary
+    coef_data <- as.data.frame(summary(model_1)$coefficients) %>%
+    rownames_to_column("Feature") %>%  # Add row names as a column
+    rename(Estimate = Estimate, Std_Error = `Std. Error`, Z_Value = `z value`, P_Value = `Pr(>|z|)`) %>%
+    mutate(Feature = str_replace_all(Feature, "\\.", " "))  # Replace underscores with spaces
+
+    # Filter for significant coefficients (p-value ≤ 0.05)
+    significant_coef_data <- coef_data %>%
+    filter(P_Value <= 0.05) %>%
+    # Sort by magnitude of coefficients
+    arrange(desc(abs(Estimate)))  
+
+    # Remove Intercept
+    significant_coef_data <- significant_coef_data %>%
+    filter(Feature != "(Intercept)")
+
+    # Create interactive visualization for significant factors in predicting attrition
+    interactive_plot <- ggplotly(
+    ggplot(significant_coef_data, aes(x = reorder(Feature, Estimate), y = Estimate)) +
+        geom_bar(stat = "identity", aes(fill = Estimate > 0)) +
+        scale_fill_manual(values = c("red", "blue"), guide = "none") +
+        labs(
+        title = "Significant Factors in Predicting Attrition",
+        x = "Feature",
+        y = "Coefficient Estimate"
+        ) +
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 55, hjust = 1))
+    )
+
+    # Display the interactive plot
+    interactive_plot
+  </code></pre>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+</body>
+</html>
