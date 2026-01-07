@@ -2,33 +2,103 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Remote Work Project Report</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
       background-color: #1e1e1e;
       color: #ddd;
-      font-family: 'Segoe UI', sans-serif;
-      padding: 30px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      min-height: 100vh;
     }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
     h1 {
       color: #9cb4c0;
+      margin-bottom: 15px;
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
     }
-    iframe {
-      width: 100%;
-      height: 900px;
-      border: none;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.2);
-    }
-    a {
+
+    .back-link {
+      display: inline-block;
       color: #9cb4c0;
       text-decoration: underline;
+      margin-bottom: 30px;
+      font-size: clamp(0.9rem, 2vw, 1rem);
+      transition: color 0.3s ease;
+    }
+
+    .back-link:hover {
+      color: #b8cdd8;
+    }
+
+    .pdf-container {
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      background-color: #000;
+      width: 100%;
+    }
+
+    iframe {
+      width: 100%;
+      height: clamp(600px, 80vh, 900px);
+      border: none;
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 15px;
+      }
+
+      .back-link {
+        margin-bottom: 20px;
+      }
+
+      iframe {
+        height: clamp(500px, 70vh, 700px);
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+
+      h1 {
+        margin-bottom: 10px;
+      }
+
+      .pdf-container {
+        border-radius: 5px;
+      }
+
+      iframe {
+        height: clamp(400px, 60vh, 600px);
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Remote Work Project Report</h1>
-  <p><a href="remote-work.html">← Back to Project Page</a></p>
-  <iframe src="../projects/remote-work/Remote Work Environments - Report.pdf"></iframe>
+  <div class="container">
+    <h1>Remote Work Project Report</h1>
+    <a href="remote-work.html" class="back-link">← Back to Project Page</a>
+
+    <div class="pdf-container">
+      <iframe src="../projects/remote-work/Remote Work Environments - Report.pdf"></iframe>
+    </div>
+  </div>
 </body>
 </html>
