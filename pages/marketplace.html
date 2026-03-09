@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <title>UCalgary Marketplace - Darren Keilty</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      background-color: #e8eef1;
+      font-family: 'Lora', serif;
+      color: #333;
+    }
+
+    .navbar {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      z-index: 1000;
+    }
+
+    .navbar a {
+      color: #9cb4c0;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: bold;
+      font-family: 'Segoe UI', sans-serif;
+      margin-left: 20px;
+      padding: 5px 10px;
+      transition: color 0.3s ease;
+    }
+
+    .navbar a:hover {
+      color: #c3cfd9;
+    }
+
+    .header {
+      text-align: center;
+      padding: 60px 20px;
+      background-color: #1d2c38;
+      background-image: url(../assets/Banner2.PNG);
+      background-position: center;
+      background-size: cover;
+      color: #9cb4c0;
+      position: relative;
+    }
+
+    .header h1 {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 40px;
+      margin: 0;
+      padding: 10px;
+    }
+
+    .header p {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 18px;
+      margin: 10px 0 0;
+    }
+
+    .section {
+      max-width: 1000px;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+
+    .section h2 {
+      color: #4b6b82;
+      font-family: 'Segoe UI', sans-serif;
+      margin-bottom: 20px;
+    }
+
+    .section p, li {
+      font-size: 16px;
+      line-height: 1.8;
+      color: #444;
+    }
+
+    .downloads {
+      margin: 30px 0;
+    }
+
+    .downloads a {
+      display: inline-block;
+      background-color: #4b6b82;
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 30px;
+      margin-right: 15px;
+      margin-bottom: 12px;
+      font-weight: bold;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+
+    .downloads a:hover {
+      background-color: #395466;
+    }
+
+    .video-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      margin-top: 25px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      background-color: white;
+    }
+
+    .video-wrap iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .visuals {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 40px;
+      margin-top: 40px;
+      padding: 0 20px;
+    }
+
+    .visuals a {
+      display: block;
+      transition: transform 0.3s ease;
+      border-radius: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .visuals a:hover {
+      transform: scale(1.02);
+    }
+
+    .visuals img {
+      width: 100%;
+      height: auto;
+      max-height: 350px;
+      border-radius: 10px;
+      object-fit: contain;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      background-color: rgb(40,40,40);
+      display: block;
+    }
+
+    .visuals .full {
+      grid-column: 1 / -1;
+      max-width: 850px;
+      justify-self: center;
+    }
+
+    .lightbox {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0,0,0,0.85);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .lightbox img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 10px;
+      box-shadow: 0 0 30px rgba(255,255,255,0.2);
+    }
+
+    .lightbox:target {
+      display: flex;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 30px;
+      right: 40px;
+      font-size: 40px;
+      color: #fff;
+      text-decoration: none;
+      font-family: sans-serif;
+      z-index: 10000;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .section {
+        padding: 0 15px;
+      }
+
+      .navbar {
+        top: 15px;
+        right: 15px;
+      }
+
+      .downloads a {
+        margin-top: 10px;
+        display: block;
+        margin-right: 0;
+      }
+
+      .visuals {
+        grid-template-columns: 1fr;
+        gap: 25px;
+        padding: 0;
+      }
+
+      .visuals .full {
+        grid-column: auto;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <a href="../index.html">Home</a>
+    <a href="projects.html">Projects</a>
+  </div>
+
+  <div class="header">
+    <h1>UCalgary Marketplace</h1>
+    <p>Full-stack marketplace platform for University of Calgary students</p>
+  </div>
+
+  <div class="section">
+    <h2>Project Overview</h2>
+    <p>By Darren Keilty, Enioluwafe Balogun, Deepshikha Dhammi, Sarim Ekram, Imdad Goraho<br><em>SENG 513 - Web-Based Systems</em></p>
+    
+    <p>UCalgary Marketplace is a web application built to give University of Calgary students one place to browse listings, post items and services, discover campus events, and manage interactions through a clean student-focused interface.</p> 
+    
+    <p>The project was developed as part of a Web-Based Systems course, and gave me the opportunity to develop a full-stack web application as part of a team, from scratch. The platform includes a React frontend, Express backend, and MySQL database, with Docker Compose for ease of development and deployment.</p> 
+
+    <h2>Key Features</h2>
+    <ul>
+      <li>Supports both marketplace posts and event posts in one student-focused platform.</li>
+      <li>Includes user account flows, post management, search, filtering, saved listings, and seller contact interactions.</li>
+      <li>Provides moderation workflows through reporting tools and an admin dashboard.</li>
+      <li>Built as a responsive, user-friendly application with a mobile-first user design and a desktop-first admin design.</li>
+    </ul>
+
+    <h2>Technical Highlights</h2>
+    <ul>
+      <li>Designed and implemented relational database structure to support shared post content, specialized post types, user and moderation actions.</li>
+      <li>Built REST-based backend functionality to connect front-end workflows with persistent data storage.</li>
+      <li>Worked across both UI design and systems structure, helping connect the user experience with the underlying engineering decisions.</li>
+    </ul>
+
+    <div class="downloads">
+      <a href="https://github.com/darrenkeilty/UCalgary-Marketplace" target="_blank"><i class="fab fa-github"></i> GitHub Repository</a>
+      <a href="https://drive.google.com/file/d/1pUKW5dsW9NQrDGJW9TKOiTl7m8KyiTFw/view?usp=sharing" target="_blank"><i class="fas fa-film"></i> Demo Video</a>
+    </div>
+
+    <h2>Sample Visuals</h2>
+    <p>
+      Below are selected application images of the UI design.
+    </p>
+
+    <div class="visuals">
+      <a href="#img1">
+        <img src="../projects/marketplace/UI1.png" alt="Marketplace home page mockup">
+      </a>
+      <a href="#img2">
+        <img src="../projects/marketplace/UI3.png" alt="Marketplace search mockup">
+      </a>
+      <a href="#img3">
+        <img src="../projects/marketplace/UI2.png" alt="Marketplace listing details mockup">
+      </a>
+      <a href="#img4">
+        <img src="../projects/marketplace/UI4.png" alt="Marketplace admin dashboard mockup">
+      </a>
+    </div>
+
+    <div id="img1" class="lightbox">
+      <a href="#" class="lightbox-close">&times;</a>
+      <img src="../projects/marketplace/mockup-home.png" alt="">
+    </div>
+
+    <div id="img2" class="lightbox">
+      <a href="#" class="lightbox-close">&times;</a>
+      <img src="../projects/marketplace/mockup-search.png" alt="">
+    </div>
+
+    <div id="img3" class="lightbox">
+      <a href="#" class="lightbox-close">&times;</a>
+      <img src="../projects/marketplace/mockup-details.png" alt="">
+    </div>
+
+    <div id="img4" class="lightbox">
+      <a href="#" class="lightbox-close">&times;</a>
+      <img src="../projects/marketplace/mockup-admin.png" alt="">
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2025 Darren Keilty. All rights reserved.
+  </footer>
+
+</body>
+</html>
