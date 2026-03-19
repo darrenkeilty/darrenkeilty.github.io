@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NFL Combine by Position</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family:"Helvetica Neue", Arial, sans-serif;
+  background:#fff; color:#222;
+  padding:32px 40px 52px;
+}
+h1 { font-size:20px; font-weight:700; margin-bottom:6px; }
+.subtitle {
+  font-size:12px; color:#666; line-height:1.75;
+  margin-bottom:20px; max-width:960px;
+}
+.subtitle b { color:#333; }
+.legend {
+  display:flex; flex-wrap:wrap;
+  gap:5px 18px; margin-bottom:22px;
+}
+.legend-item {
+  display:flex; align-items:center;
+  gap:6px; font-size:12px; color:#444;
+  cursor:pointer; user-select:none;
+}
+.legend-item .sw {
+  width:13px; height:13px;
+  border-radius:3px; flex-shrink:0;
+}
+.legend-item.dimmed { opacity:.2; }
+.grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:24px 32px;
+}
+.panel h3 {
+  font-size:11.5px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.04em;
+  color:#333; margin-bottom:5px;
+}
+.panel h3 .note {
+  font-weight:400; text-transform:none;
+  letter-spacing:0; color:#999; font-size:10px;
+}
+.panel svg { display:block; overflow:visible; }
+#tooltip {
+  position:fixed; pointer-events:none;
+  background:#fff; border:1px solid #ddd;
+  border-radius:6px; padding:10px 13px;
+  font-size:12px; line-height:1.8;
+  box-shadow:0 4px 14px rgba(0,0,0,.10);
+  display:none; z-index:99; min-width:190px;
+}
+#tooltip strong { display:block; font-size:13px; margin-bottom:3px; }
+.caption { margin-top:30px; font-size:10px; color:#bbb; }
+</style>
+</head>
+<body>
+<h1>What Does a Good NFL Combine Look Like by Position?</h1>
+<div class="subtitle">
+  Thick bar = middle 50% of players (Q25–Q75) &nbsp;·&nbsp;
+  Thin line = Q10–Q90 range &nbsp;·&nbsp;
+  <b>○</b> = median &nbsp;·&nbsp;
+  <b style="color:goldenrod">◆</b> = elite threshold (top 10%)
+  <p>Positions sorted by median 40-yard dash (fastest at top). Hover any row for exact values. Click legend to hide/show a position</p>
+  
+</div>
+<div class="legend" id="legend"></div>
+<div class="grid"   id="grid"></div>
+<div id="tooltip"></div>
+
+<script>
+// data
+const ALL_STATS  = [{"q10":4.58,"q25":4.6850000000000005,"med":4.81,"q75":4.915,"q90":5.0,"pos":"QB","col":"forty","n":91},{"q10":4.408,"q25":4.47,"med":4.53,"q75":4.59,"q90":4.65,"pos":"RB","col":"forty","n":179},{"q10":4.35,"q25":4.42,"med":4.47,"q75":4.532500000000001,"q90":4.59,"pos":"WR","col":"forty","n":276},{"q10":4.55,"q25":4.63,"med":4.72,"q75":4.8,"q90":4.87,"pos":"TE","col":"forty","n":116},{"q10":4.96,"q25":5.05,"med":5.18,"q75":5.29,"q90":5.376,"pos":"OT","col":"forty","n":145},{"q10":4.67,"q25":4.79,"med":4.91,"q75":5.05,"q90":5.15,"pos":"DL","col":"forty","n":71},{"q10":4.468,"q25":4.53,"med":4.63,"q75":4.69,"q90":4.78,"pos":"EDGE","col":"forty","n":45},{"q10":4.448,"q25":4.515,"med":4.58,"q75":4.65,"q90":4.69,"pos":"LB","col":"forty","n":75},{"q10":4.37,"q25":4.42,"med":4.48,"q75":4.53,"q90":4.57,"pos":"CB","col":"forty","n":253},{"q10":4.4,"q25":4.45,"med":4.53,"q75":4.59,"q90":4.64,"pos":"S","col":"forty","n":132},{"q10":27.5,"q25":29.0,"med":31.0,"q75":33.5,"q90":35.5,"pos":"QB","col":"vertical","n":91},{"q10":30.0,"q25":32.0,"med":34.25,"q75":36.875,"q90":39.0,"pos":"RB","col":"vertical","n":174},{"q10":32.5,"q25":34.0,"med":36.0,"q75":37.5,"q90":39.5,"pos":"WR","col":"vertical","n":268},{"q10":30.5,"q25":31.5,"med":33.5,"q75":36.0,"q90":37.5,"pos":"TE","col":"vertical","n":105},{"q10":24.0,"q25":26.0,"med":28.5,"q75":30.5,"q90":32.0,"pos":"OT","col":"vertical","n":132},{"q10":27.2,"q25":29.5,"med":32.0,"q75":34.0,"q90":36.0,"pos":"DL","col":"vertical","n":65},{"q10":31.4,"q25":32.5,"med":34.5,"q75":36.5,"q90":38.1,"pos":"EDGE","col":"vertical","n":49},{"q10":32.0,"q25":32.5,"med":35.0,"q75":37.5,"q90":39.5,"pos":"LB","col":"vertical","n":81},{"q10":33.0,"q25":34.5,"med":36.0,"q75":38.0,"q90":40.5,"pos":"CB","col":"vertical","n":208},{"q10":32.5,"q25":34.0,"med":35.5,"q75":38.0,"q90":40.4,"pos":"S","col":"vertical","n":123},{"q10":103.6,"q25":110.0,"med":113.0,"q75":118.0,"q90":121.4,"pos":"QB","col":"broad_jump","n":87},{"q10":114.2,"q25":118.0,"med":121.0,"q75":124.0,"q90":128.0,"pos":"RB","col":"broad_jump","n":163},{"q10":116.0,"q25":120.0,"med":123.0,"q75":126.0,"q90":132.0,"pos":"WR","col":"broad_jump","n":266},{"q10":111.0,"q25":114.75,"med":118.0,"q75":122.0,"q90":125.10000000000001,"pos":"TE","col":"broad_jump","n":100},{"q10":97.0,"q25":101.0,"med":106.0,"q75":111.0,"q90":114.0,"pos":"OT","col":"broad_jump","n":131},{"q10":102.2,"q25":109.0,"med":115.0,"q75":119.0,"q90":122.9,"pos":"DL","col":"broad_jump","n":62},{"q10":117.0,"q25":118.0,"med":121.0,"q75":125.0,"q90":128.3,"pos":"EDGE","col":"broad_jump","n":48},{"q10":116.0,"q25":118.0,"med":122.0,"q75":126.0,"q90":129.0,"pos":"LB","col":"broad_jump","n":80},{"q10":117.0,"q25":120.0,"med":124.0,"q75":128.0,"q90":132.0,"pos":"CB","col":"broad_jump","n":204},{"q10":116.0,"q25":119.0,"med":123.0,"q75":127.0,"q90":132.0,"pos":"S","col":"broad_jump","n":124},{"q10":13.5,"q25":16.0,"med":19.0,"q75":22.0,"q90":24.5,"pos":"RB","col":"bench","n":136},{"q10":10.0,"q25":11.25,"med":15.0,"q75":18.0,"q90":20.0,"pos":"WR","col":"bench","n":190},{"q10":15.0,"q25":17.0,"med":20.0,"q75":22.0,"q90":24.10000000000001,"pos":"TE","col":"bench","n":100},{"q10":19.0,"q25":21.0,"med":24.0,"q75":27.0,"q90":29.0,"pos":"OT","col":"bench","n":105},{"q10":21.0,"q25":22.0,"med":25.0,"q75":29.0,"q90":32.0,"pos":"DL","col":"bench","n":71},{"q10":19.0,"q25":21.0,"med":23.0,"q75":25.0,"q90":27.0,"pos":"EDGE","col":"bench","n":36},{"q10":16.3,"q25":19.0,"med":21.0,"q75":24.0,"q90":27.0,"pos":"LB","col":"bench","n":54},{"q10":10.0,"q25":12.0,"med":15.0,"q75":17.0,"q90":19.0,"pos":"CB","col":"bench","n":189},{"q10":12.0,"q25":14.0,"med":17.0,"q75":20.0,"q90":22.0,"pos":"S","col":"bench","n":112},{"q10":6.897,"q25":7.0,"med":7.1,"q75":7.21,"q90":7.333,"pos":"QB","col":"cone","n":78},{"q10":6.802,"q25":6.89,"med":7.04,"q75":7.17,"q90":7.26,"pos":"RB","col":"cone","n":87},{"q10":6.68,"q25":6.81,"med":6.95,"q75":7.08,"q90":7.2,"pos":"WR","col":"cone","n":181},{"q10":6.913,"q25":7.05,"med":7.13,"q75":7.255,"q90":7.417,"pos":"TE","col":"cone","n":84},{"q10":7.391,"q25":7.6175,"med":7.8,"q75":7.94,"q90":8.136000000000001,"pos":"OT","col":"cone","n":112},{"q10":6.98,"q25":7.21,"med":7.45,"q75":7.785,"q90":8.0,"pos":"DL","col":"cone","n":51},{"q10":6.85,"q25":6.91,"med":7.02,"q75":7.09,"q90":7.38,"pos":"LB","col":"cone","n":41},{"q10":6.69,"q25":6.81,"med":6.93,"q75":7.05,"q90":7.1419999999999995,"pos":"CB","col":"cone","n":139},{"q10":6.664,"q25":6.78,"med":6.945,"q75":7.0525,"q90":7.21,"pos":"S","col":"cone","n":68},{"q10":4.12,"q25":4.21,"med":4.3149999999999995,"q75":4.44,"q90":4.52,"pos":"QB","col":"shuttle","n":80},{"q10":4.093,"q25":4.19,"med":4.275,"q75":4.35,"q90":4.454,"pos":"RB","col":"shuttle","n":94},{"q10":4.03,"q25":4.13,"med":4.22,"q75":4.325,"q90":4.39,"pos":"WR","col":"shuttle","n":191},{"q10":4.2,"q25":4.28,"med":4.36,"q75":4.46,"q90":4.521999999999999,"pos":"TE","col":"shuttle","n":89},{"q10":4.497,"q25":4.5825,"med":4.71,"q75":4.84,"q90":4.94,"pos":"OT","col":"shuttle","n":118},{"q10":4.29,"q25":4.34,"med":4.46,"q75":4.73,"q90":4.86,"pos":"DL","col":"shuttle","n":51},{"q10":4.126,"q25":4.21,"med":4.27,"q75":4.36,"q90":4.4,"pos":"LB","col":"shuttle","n":44},{"q10":3.98,"q25":4.0875,"med":4.18,"q75":4.28,"q90":4.34,"pos":"CB","col":"shuttle","n":148},{"q10":4.06,"q25":4.105,"med":4.19,"q75":4.27,"q90":4.33,"pos":"S","col":"shuttle","n":71}];
+const EVENTS     = [{"col":"forty","label":"40-Yard Dash","unit":"sec","timed":true},{"col":"vertical","label":"Vertical Jump","unit":"in","timed":false},{"col":"broad_jump","label":"Broad Jump","unit":"in","timed":false},{"col":"bench","label":"Bench Press","unit":"reps","timed":false},{"col":"cone","label":"3-Cone Drill","unit":"sec","timed":true},{"col":"shuttle","label":"Shuttle Run","unit":"sec","timed":true}];
+const POS_ORDER  = ["WR","CB","RB","S","LB","EDGE","TE","QB","DL","OT","IOL"];
+
+const COLOR = {
+  QB:"#E86D2B", RB:"#F0A500", WR:"#C9B020",
+  TE:"#4EA84E", OT:"#2E86AB", IOL:"#5A9EC9",
+  DL:"#9B5ECA", EDGE:"#C46FBF", LB:"#E06B8B",
+  CB:"#E84A5F", S:"#B03A4F",
+};
+
+// tooltip
+const tip = document.getElementById("tooltip");
+
+function showTip(evt, d, ev) {
+  const elite = ev.timed ? d.q10 : d.q90;
+  tip.innerHTML = `
+    <strong>${d.pos} — ${ev.label}</strong>
+    n = ${d.n}<br>
+    10th pct: <b>${d.q10.toFixed(2)}</b> ${ev.unit}<br>
+    25th pct: <b>${d.q25.toFixed(2)}</b> ${ev.unit}<br>
+    Median: &nbsp;<b>${d.med.toFixed(2)}</b> ${ev.unit}<br>
+    75th pct: <b>${d.q75.toFixed(2)}</b> ${ev.unit}<br>
+    90th pct: <b>${d.q90.toFixed(2)}</b> ${ev.unit}<br>
+    <span style="color:goldenrod">◆</span> Elite (top 10%): <b>${elite.toFixed(2)}</b> ${ev.unit}
+  `;
+  tip.style.display = "block";
+  moveTip(evt);
+}
+function moveTip(evt) {
+  const x = evt.clientX + 16, y = evt.clientY - 10;
+  tip.style.left = (x + tip.offsetWidth > window.innerWidth ? x - tip.offsetWidth - 28 : x) + "px";
+  tip.style.top  = y + "px";
+}
+document.addEventListener("mousemove", e => { if(tip.style.display!=="none") moveTip(e); });
+document.addEventListener("mouseleave", () => tip.style.display = "none");
+
+// legend
+const hidden = new Set();
+const lg = document.getElementById("legend");
+POS_ORDER.forEach(pos => {
+  const item = document.createElement("div");
+  item.className = "legend-item";
+  item.innerHTML = `<div class="sw" style="background:${COLOR[pos]}"></div>${pos}`;
+  item.addEventListener("click", () => {
+    hidden.has(pos) ? hidden.delete(pos) : hidden.add(pos);
+    item.classList.toggle("dimmed");
+    d3.selectAll(`.g-${pos}`).attr("opacity", hidden.has(pos) ? 0 : 1);
+  });
+  lg.appendChild(item);
+});
+
+// draw
+const PW = 320, BAR = 13, PAD = {l:46, r:14, t:8, b:24};
+
+EVENTS.forEach(ev => {
+  const rows = POS_ORDER
+    .map(pos => ALL_STATS.find(d => d.col === ev.col && d.pos === pos))
+    .filter(Boolean);
+  if (!rows.length) return;
+
+  const PH = rows.length * (BAR + 10) + PAD.t + PAD.b;
+
+  const xMin = d3.min(rows, d => d.q10);
+  const xMax = d3.max(rows, d => d.q90);
+  const pad  = (xMax - xMin) * 0.07;
+
+  const x = d3.scaleLinear()
+    .domain([xMin - pad, xMax + pad])
+    .range([PAD.l, PW - PAD.r]);
+
+  const y = d3.scaleBand()
+    .domain(rows.map(d => d.pos))
+    .range([PAD.t, PH - PAD.b])
+    .padding(0.35);
+
+  const panel = document.createElement("div");
+  panel.className = "panel";
+
+  const h3 = document.createElement("h3");
+  h3.innerHTML = `${ev.label} <span class="note">(${ev.unit}) — ${ev.timed ? "lower = better" : "higher = better"}</span>`;
+  panel.appendChild(h3);
+
+  const svg = d3.select(panel).append("svg").attr("width", PW).attr("height", PH);
+
+  // x-axis grid lines
+  svg.append("g")
+    .attr("transform", `translate(0,${PH - PAD.b})`)
+    .call(
+      d3.axisBottom(x).ticks(5)
+        .tickSize(-(PH - PAD.t - PAD.b))
+        .tickFormat(d3.format(ev.unit === "reps" ? "d" : ".2f"))
+    )
+    .call(g => g.select(".domain").remove())
+    .call(g => g.selectAll(".tick line").attr("stroke","#eee").attr("stroke-dasharray","2,2"))
+    .call(g => g.selectAll(".tick text").attr("fill","#aaa").attr("font-size", 9));
+
+  rows.forEach(d => {
+    const cy    = y(d.pos) + y.bandwidth() / 2;
+    const col   = COLOR[d.pos] || "#888";
+    const elite = ev.timed ? d.q10 : d.q90;
+
+    const g = svg.append("g").attr("class", `g-${d.pos}`);
+
+    // whisker Q10–Q90
+    g.append("line")
+      .attr("x1",x(d.q10)).attr("x2",x(d.q90)).attr("y1",cy).attr("y2",cy)
+      .attr("stroke",col).attr("stroke-width",1.5).attr("opacity",0.5);
+
+    // end caps
+    [d.q10, d.q90].forEach(v => {
+      g.append("line")
+        .attr("x1",x(v)).attr("x2",x(v)).attr("y1",cy-4).attr("y2",cy+4)
+        .attr("stroke",col).attr("stroke-width",1.5).attr("opacity",0.5);
+    });
+
+    // IQR band
+    g.append("rect")
+      .attr("x",x(d.q25))
+      .attr("width", Math.max(0, x(d.q75)-x(d.q25)))
+      .attr("y",cy - BAR/2).attr("height",BAR)
+      .attr("fill",col).attr("opacity",0.28).attr("rx",3);
+
+    // position label
+    g.append("text")
+      .attr("x",PAD.l-6).attr("y",cy)
+      .attr("text-anchor","end").attr("dominant-baseline","middle")
+      .attr("font-size",11).attr("font-weight",700).attr("fill",col)
+      .text(d.pos);
+
+    // median dot
+    g.append("circle")
+      .attr("cx",x(d.med)).attr("cy",cy).attr("r",4.5)
+      .attr("fill","white").attr("stroke",col).attr("stroke-width",2);
+
+    // elite diamond
+    const ex = x(elite), ds = 5.5;
+    g.append("path")
+      .attr("d",`M${ex},${cy-ds} L${ex+ds},${cy} L${ex},${cy+ds} L${ex-ds},${cy} Z`)
+      .attr("fill","gold").attr("stroke","#666").attr("stroke-width",1);
+
+    // invisible hover zone
+    g.append("rect")
+      .attr("x", x(d.q10)-4)
+      .attr("width", x(d.q90)-x(d.q10)+8)
+      .attr("y", cy-BAR).attr("height",BAR*2)
+      .attr("fill","transparent").style("cursor","crosshair")
+      .on("mousemove", evt => showTip(evt, d, ev))
+      .on("mouseleave", () => tip.style.display = "none");
+  });
+
+  document.getElementById("grid").appendChild(panel);
+});
+</script>
+</body>
+</html>
