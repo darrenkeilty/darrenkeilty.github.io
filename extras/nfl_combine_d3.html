@@ -92,7 +92,6 @@ function showTip(evt, d, ev) {
   const elite = ev.timed ? d.q10 : d.q90;
   tip.innerHTML = `
     <strong>${d.pos} — ${ev.label}</strong>
-    n = ${d.n}<br>
     10th pct: <b>${d.q10.toFixed(2)}</b> ${ev.unit}<br>
     25th pct: <b>${d.q25.toFixed(2)}</b> ${ev.unit}<br>
     Median: &nbsp;<b>${d.med.toFixed(2)}</b> ${ev.unit}<br>
