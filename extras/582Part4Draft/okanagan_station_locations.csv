@@ -1,0 +1,6 @@
+station_key,station_name,station_type,station_id,latitude,longitude,elevation_m,source
+all,All stations,overview,,,,,Overview
+kelowna,Okanagan Lake at Kelowna,lake level,08NM083,49.88611111111111,-119.49944444444445,,Water Survey of Canada
+penticton_outflow,Okanagan River at Penticton,outflow,08NM050,49.498333333333335,-119.61527777777778,,Water Survey of Canada
+brenda_mine,Brenda Mine,snow,2F18P,49.8623611,-119.9821111,1460.0,BC Snow Survey
+penticton_weather,Penticton A,weather,1126146,49.462500000000006,-119.60222222222221,344.4,ECCC Climate
