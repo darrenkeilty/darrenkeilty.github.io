@@ -2,7 +2,7 @@ id,title,marker_label,caption,image_path,station_key,latitude,longitude
 brenda_mine_cam,Brenda Mine Snow Station,Brenda Mine Snow,Camera view at the Brenda Mine snow survey site showing accumulated alpine snowpack.,imgs/brendamine.jpg,brenda_mine,,
 okanagan_dam_photo,Okanagan Lake Dam at Penticton,Penticton outflow,High freshet releases through the Penticton control dam used as the outflow reference.,imgs/Okanagan-Dam.jpg,penticton_outflow,,
 kelowna_level_station_photo,Okanagan Lake at Kelowna Level Station,Kelowna level station,Okanagan Lake at Kelowna water level station used as the lake level source.,imgs/kelowna-level-station.jpg,kelowna,,
-kelowna_rotary_flood,Kelowna Rotary Beach Sandbag Berm (2017),Kelowna flood impacts,Sandbags protecting the Kelowna waterfront during high Okanagan Lake levels.,imgs/kelowna-rotary.png,,49.796928,-119.531998
+kelowna_rotary_flood,Kelowna Rotary Beach Sandbag Berm (2017),Kelowna flood impacts,Sandbags protecting the Kelowna waterfront during high Okanagan Lake levels.,imgs/kelowna-rotary.png,,49.849395,-119.486886
 penticton_lakeshore_flood,Penticton Lakeshore Flooding (2017),Penticton flood impacts,Sandbag wall protecting the Penticton shoreline during high water.,imgs/penticton-beach-image.jpg,,49.502344,-119.597843
 trout_creek_high_flow,Trout Creek High Water (2017),Trout Creek high flow,Flood protection and property damage near Trout Creek during spring.,imgs/troutcreek.jpg,,49.567218,-119.622439
 penticton_weather_station,Penticton A Weather Station,Penticton A weather,Penticton A weather station used for the temperature and precipitation context in the driver panels.,imgs/penticton-weather.jpg,penticton_weather,,
