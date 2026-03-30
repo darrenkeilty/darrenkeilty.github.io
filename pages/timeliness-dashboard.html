@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Commute Dashboard - Darren Keilty</title>
   <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10161c;
+      --panel: #17212a;
+      --panel-border: #2f4658;
+      --text: #e5edf3;
+      --muted: #9db1c0;
+      --accent: #9cb4c0;
+      --accent-strong: #d4e3eb;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -12,147 +24,310 @@
     }
 
     body {
-      background-color: #1e1e1e;
-      color: #ddd;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 20px;
       min-height: 100vh;
+      background:
+        radial-gradient(circle at top, rgba(156, 180, 192, 0.15), transparent 34%),
+        linear-gradient(180deg, #0f171d 0%, #10161c 100%);
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    .container {
-      max-width: 1400px;
+    .shell {
+      width: min(1400px, calc(100% - 32px));
       margin: 0 auto;
+      padding: 24px 0 40px;
     }
 
-    h1 {
-      color: #9cb4c0;
-      margin-bottom: 15px;
-      font-size: clamp(1.5rem, 4vw, 2.5rem);
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding: 16px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      background: rgba(23, 33, 42, 0.9);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
     }
 
-    .back-link {
-      display: inline-block;
-      color: #9cb4c0;
-      text-decoration: underline;
-      margin-bottom: 30px;
-      font-size: clamp(0.9rem, 2vw, 1rem);
-      transition: color 0.3s ease;
+    .title-block h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 3.3vw, 2.3rem);
+      color: var(--accent-strong);
     }
 
-    .back-link:hover {
-      color: #b8cdd8;
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: var(--accent);
+      color: #0f171d;
+      text-decoration: none;
+      font-weight: 700;
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      background: var(--accent-strong);
+    }
+
+    .button.secondary {
+      background: transparent;
+      color: var(--accent);
+      border-color: var(--panel-border);
+    }
+
+    .button.secondary:hover {
+      border-color: var(--accent);
+      background: rgba(156, 180, 192, 0.08);
+    }
+
+    .dashboard-actions {
+      display: none;
+      margin-bottom: 20px;
+      padding: 18px;
+      border-radius: 14px;
+      background: rgba(23, 33, 42, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: var(--shadow);
+    }
+
+    .dashboard-actions p {
+      margin-bottom: 14px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .action-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .dashboard-preview {
+      display: none;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: var(--shadow);
+      background: var(--panel);
+    }
+
+    .dashboard-preview img {
+      display: block;
+      width: 100%;
+      height: auto;
     }
 
     .dashboard-container {
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      background-color: #000;
       width: 100%;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background:
+        linear-gradient(135deg, rgba(156, 180, 192, 0.08), rgba(255, 255, 255, 0.02)),
+        var(--panel);
+      box-shadow: var(--shadow);
     }
 
     .tableauPlaceholder {
       position: relative;
       width: 100%;
+      min-height: 1300px;
+      background: #111;
     }
 
     .tableauViz {
       width: 100%;
-      height: auto;
+      height: 100%;
+    }
+
+    @media (max-width: 1024px) {
+      .tableauPlaceholder {
+        min-height: 1120px;
+      }
     }
 
     @media (max-width: 768px) {
-      body {
-        padding: 15px;
+      .shell {
+        width: min(100% - 20px, 1400px);
+        padding-top: 14px;
       }
 
-      .back-link {
-        margin-bottom: 20px;
+      .topbar {
+        padding: 14px;
+        border-radius: 14px;
+      }
+
+      .actions {
+        width: 100%;
+      }
+
+      .button {
+        flex: 1 1 160px;
+      }
+
+      .dashboard-actions {
+        display: block;
+      }
+
+      .dashboard-preview {
+        display: block;
+      }
+
+      .dashboard-container {
+        display: none;
       }
     }
 
     @media (max-width: 480px) {
-      body {
-        padding: 10px;
+      .button {
+        width: 100%;
       }
 
-      h1 {
-        margin-bottom: 10px;
+      .dashboard-actions {
+        padding: 16px;
+        border-radius: 12px;
       }
 
-      .dashboard-container {
-        border-radius: 5px;
+      .action-links {
+        flex-direction: column;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Commute Dashboard</h1>
-    <a href="timeliness-project.html" class="back-link">← Back to Project Page</a>
+  <main class="shell">
+    <section class="topbar">
+      <div class="title-block">
+        <h1>Commute Dashboard</h1>
+      </div>
+      <div class="actions">
+        <a href="timeliness-project.html" class="button secondary">Back to Project Page</a>
+        <a href="https://public.tableau.com/views/CPSC482-Project_17653313200860/Dashboard3?:showVizHome=no" class="button secondary" target="_blank" rel="noopener noreferrer">Open in Tableau Public</a>
+      </div>
+    </section>
+
+    <div class="dashboard-actions">
+      <p>The interactive Tableau dashboard is easier to explore in the full Tableau view on smaller screens.</p>
+      <div class="action-links">
+        <a href="https://public.tableau.com/views/CPSC482-Project_17653313200860/Dashboard3?:showVizHome=no" class="button" target="_blank" rel="noopener noreferrer">Open Full Dashboard</a>
+        <a href="https://public.tableau.com/views/CPSC482-Project_17653313200860/Dashboard3?:showVizHome=no" class="button secondary" target="_blank" rel="noopener noreferrer">Open in Tableau Public</a>
+      </div>
+    </div>
+
+    <div class="dashboard-preview">
+      <img
+        src="https://public.tableau.com/static/images/CP/CPSC482-Project_17653313200860/Dashboard3/1.png"
+        alt="Preview of the commute dashboard"
+      >
+    </div>
 
     <div class="dashboard-container">
-      <div class='tableauPlaceholder' id='viz1765332988893'>
+      <div class="tableauPlaceholder" id="tableau-dashboard">
         <noscript>
-          <a href='#'>
-            <img alt='Commute Dashboard' 
-              src='https://public.tableau.com/static/images/CP/CPSC482-Project_17653313200860/Dashboard3/1_rss.png' 
-              style='border: none; width: 100%; height: auto;' />
+          <a href="https://public.tableau.com/views/CPSC482-Project_17653313200860/Dashboard3?:showVizHome=no">
+            <img
+              alt="Commute Dashboard"
+              src="https://public.tableau.com/static/images/CP/CPSC482-Project_17653313200860/Dashboard3/1_rss.png"
+              style="border: none; width: 100%; height: auto;"
+            >
           </a>
         </noscript>
-        <object class='tableauViz' style='display:none;'>
-          <param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' />
-          <param name='embed_code_version' value='3' />
-          <param name='site_root' value='' />
-          <param name='name' value='CPSC482-Project_17653313200860/Dashboard3' />
-          <param name='tabs' value='no' />
-          <param name='toolbar' value='yes' />
-          <param name='static_image' value='https://public.tableau.com/static/images/CP/CPSC482-Project_17653313200860/Dashboard3/1.png' />
-          <param name='animate_transition' value='yes' />
-          <param name='display_static_image' value='yes' />
-          <param name='display_spinner' value='yes' />
-          <param name='display_overlay' value='yes' />
-          <param name='display_count' value='yes' />
-          <param name='language' value='en-US' />
-          <param name='filter' value='publish=yes' />
+        <object class="tableauViz" style="display:none;">
+          <param name="host_url" value="https%3A%2F%2Fpublic.tableau.com%2F" />
+          <param name="embed_code_version" value="3" />
+          <param name="site_root" value="" />
+          <param name="name" value="CPSC482-Project_17653313200860/Dashboard3" />
+          <param name="tabs" value="no" />
+          <param name="toolbar" value="yes" />
+          <param name="static_image" value="https://public.tableau.com/static/images/CP/CPSC482-Project_17653313200860/Dashboard3/1.png" />
+          <param name="animate_transition" value="yes" />
+          <param name="display_static_image" value="yes" />
+          <param name="display_spinner" value="yes" />
+          <param name="display_overlay" value="yes" />
+          <param name="display_count" value="yes" />
+          <param name="language" value="en-US" />
+          <param name="filter" value="publish=yes" />
         </object>
       </div>
     </div>
-  </div>
+  </main>
 
-  <script type='text/javascript'>
-    function initTableau() {
-      const divElement = document.getElementById('viz1765332988893');
-      const vizElement = divElement.getElementsByTagName('object')[0];
-      const width = divElement.offsetWidth;
-
-      if (width > 1200) {
-        vizElement.style.width = '100%';
-        vizElement.style.height = '2195px';
-      } else if (width > 768) {
-        vizElement.style.width = '100%';
-        vizElement.style.height = '1800px';
-      } else if (width > 480) {
-        vizElement.style.width = '100%';
-        vizElement.style.height = '1500px';
-      } else {
-        vizElement.style.width = '100%';
-        vizElement.style.height = '1200px';
+  <script type="text/javascript">
+    function getDashboardHeight(width) {
+      if (width >= 1200) {
+        return 1320;
       }
 
-      const scriptElement = document.createElement('script');
-      scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';
+      if (width >= 992) {
+        return 1240;
+      }
+
+      if (width >= 768) {
+        return 1120;
+      }
+
+      return 0;
+    }
+
+    function applyDesktopSizing() {
+      const placeholder = document.getElementById("tableau-dashboard");
+      const vizElement = placeholder.getElementsByTagName("object")[0];
+      const width = placeholder.offsetWidth;
+      const height = getDashboardHeight(width);
+
+      if (!height) {
+        return;
+      }
+
+      placeholder.style.minHeight = height + "px";
+      vizElement.style.width = "100%";
+      vizElement.style.height = height + "px";
+    }
+
+    function initTableau() {
+      if (window.innerWidth <= 768) {
+        return;
+      }
+
+      const divElement = document.getElementById("tableau-dashboard");
+      const vizElement = divElement.getElementsByTagName("object")[0];
+
+      applyDesktopSizing();
+
+      const scriptElement = document.createElement("script");
+      scriptElement.src = "https://public.tableau.com/javascripts/api/viz_v1.js";
       vizElement.parentNode.insertBefore(scriptElement, vizElement);
     }
 
-    window.addEventListener('load', initTableau);
-    
+    window.addEventListener("load", initTableau);
+
     let resizeTimer;
-    window.addEventListener('resize', function() {
+    window.addEventListener("resize", function () {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(function() {
-        location.reload();
-      }, 500);
+      resizeTimer = setTimeout(function () {
+        if (window.innerWidth > 768) {
+          applyDesktopSizing();
+        }
+      }, 150);
     });
   </script>
 </body>
