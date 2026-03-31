@@ -99,43 +99,6 @@
       background: rgba(156, 180, 192, 0.08);
     }
 
-    .dashboard-actions {
-      display: none;
-      margin-bottom: 20px;
-      padding: 18px;
-      border-radius: 14px;
-      background: rgba(23, 33, 42, 0.92);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: var(--shadow);
-    }
-
-    .dashboard-actions p {
-      margin-bottom: 14px;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .action-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .dashboard-preview {
-      display: none;
-      border-radius: 18px;
-      overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: var(--shadow);
-      background: var(--panel);
-    }
-
-    .dashboard-preview img {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
-
     .dashboard-container {
       width: 100%;
       border-radius: 18px;
@@ -183,32 +146,11 @@
       .button {
         flex: 1 1 160px;
       }
-
-      .dashboard-actions {
-        display: block;
-      }
-
-      .dashboard-preview {
-        display: block;
-      }
-
-      .dashboard-container {
-        display: none;
-      }
     }
 
     @media (max-width: 480px) {
       .button {
         width: 100%;
-      }
-
-      .dashboard-actions {
-        padding: 16px;
-        border-radius: 12px;
-      }
-
-      .action-links {
-        flex-direction: column;
       }
     }
   </style>
@@ -224,21 +166,6 @@
         <a href="https://public.tableau.com/views/CPSC482-Project_17653313200860/Dashboard3?:showVizHome=no" class="button secondary" target="_blank" rel="noopener noreferrer">Open in Tableau Public</a>
       </div>
     </section>
-
-    <div class="dashboard-actions">
-      <p>The interactive Tableau dashboard is easier to explore in the full Tableau view on smaller screens.</p>
-      <div class="action-links">
-        <a href="https://public.tableau.com/views/CPSC482-Project_17653313200860/Dashboard3?:showVizHome=no" class="button" target="_blank" rel="noopener noreferrer">Open Full Dashboard</a>
-        <a href="https://public.tableau.com/views/CPSC482-Project_17653313200860/Dashboard3?:showVizHome=no" class="button secondary" target="_blank" rel="noopener noreferrer">Open in Tableau Public</a>
-      </div>
-    </div>
-
-    <div class="dashboard-preview">
-      <img
-        src="https://public.tableau.com/static/images/CP/CPSC482-Project_17653313200860/Dashboard3/1.png"
-        alt="Preview of the commute dashboard"
-      >
-    </div>
 
     <div class="dashboard-container">
       <div class="tableauPlaceholder" id="tableau-dashboard">
@@ -285,7 +212,11 @@
         return 1120;
       }
 
-      return 0;
+      if (width >= 480) {
+        return 1020;
+      }
+
+      return 920;
     }
 
     function applyDesktopSizing() {
@@ -294,20 +225,12 @@
       const width = placeholder.offsetWidth;
       const height = getDashboardHeight(width);
 
-      if (!height) {
-        return;
-      }
-
       placeholder.style.minHeight = height + "px";
       vizElement.style.width = "100%";
       vizElement.style.height = height + "px";
     }
 
     function initTableau() {
-      if (window.innerWidth <= 768) {
-        return;
-      }
-
       const divElement = document.getElementById("tableau-dashboard");
       const vizElement = divElement.getElementsByTagName("object")[0];
 
@@ -324,9 +247,7 @@
     window.addEventListener("resize", function () {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
-        if (window.innerWidth > 768) {
-          applyDesktopSizing();
-        }
+        applyDesktopSizing();
       }, 150);
     });
   </script>
