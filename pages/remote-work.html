@@ -157,6 +157,10 @@
       display: flex;
     }
 
+    .lightbox.is-open {
+      display: flex;
+    }
+
     .lightbox-close {
       position: absolute;
       top: 30px;
@@ -259,19 +263,19 @@
     
     <!-- Lightbox Overlays -->
     <div id="img1" class="lightbox">
-      <a href="#" class="lightbox-close">&times;</a>
+      <a href="#" class="lightbox-close" data-lightbox-close>&times;</a>
       <img src="../projects/remote-work/q1-visual.png" alt="">
     </div>
     <div id="img2" class="lightbox">
-      <a href="#" class="lightbox-close">&times;</a>
+      <a href="#" class="lightbox-close" data-lightbox-close>&times;</a>
       <img src="../projects/remote-work/q2-visual.png" alt="">
     </div>
     <div id="img3" class="lightbox">
-      <a href="#" class="lightbox-close">&times;</a>
+      <a href="#" class="lightbox-close" data-lightbox-close>&times;</a>
       <img src="../projects/remote-work/q3-visual.png" alt="">
     </div>
     <div id="img4" class="lightbox">
-      <a href="#" class="lightbox-close">&times;</a>
+      <a href="#" class="lightbox-close" data-lightbox-close>&times;</a>
       <img src="../projects/remote-work/q3.2-visual.png" alt="">
     </div>
     
@@ -280,6 +284,41 @@
   <footer>
     &copy; 2025 Darren Keilty. All rights reserved.
   </footer>
+
+  <script>
+    document.querySelectorAll('a[href^="#img"]').forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = document.querySelector(link.getAttribute("href"));
+        if (!target) {
+          return;
+        }
+        target.classList.add("is-open");
+      });
+    });
+
+    document.querySelectorAll("[data-lightbox-close]").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const lightbox = link.closest(".lightbox");
+        if (lightbox) {
+          lightbox.classList.remove("is-open");
+        }
+        const cleanUrl = window.location.pathname + window.location.search;
+        history.replaceState(null, "", cleanUrl);
+      });
+    });
+
+    document.querySelectorAll(".lightbox").forEach((lightbox) => {
+      lightbox.addEventListener("click", (event) => {
+        if (event.target === lightbox) {
+          lightbox.classList.remove("is-open");
+          const cleanUrl = window.location.pathname + window.location.search;
+          history.replaceState(null, "", cleanUrl);
+        }
+      });
+    });
+  </script>
 
 </body>
 </html>
