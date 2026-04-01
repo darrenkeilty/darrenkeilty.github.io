@@ -4,102 +4,78 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<!-- created with Free Online Sitemap Generator www.xml-sitemaps.com -->
 
 
 <url>
   <loc>https://darrenkeilty.github.io/</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
+  <lastmod>2026-04-01T22:56:12+00:00</lastmod>
   <priority>1.00</priority>
 </url>
 <url>
   <loc>https://darrenkeilty.github.io/index.html</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
+  <lastmod>2026-04-01T22:56:12+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://darrenkeilty.github.io/pages/projects.html</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
+  <lastmod>2026-04-01T22:56:12+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://darrenkeilty.github.io/pages/resume.html</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
+  <lastmod>2026-04-01T22:56:12+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://darrenkeilty.github.io/pages/remote-work.html</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
+  <lastmod>2026-04-01T22:56:12+00:00</lastmod>
   <priority>0.64</priority>
 </url>
 <url>
   <loc>https://darrenkeilty.github.io/pages/corus-case.html</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
+  <lastmod>2026-04-01T22:56:12+00:00</lastmod>
   <priority>0.64</priority>
 </url>
 <url>
   <loc>https://darrenkeilty.github.io/pages/timeliness-project.html</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
+  <lastmod>2026-04-01T22:56:12+00:00</lastmod>
   <priority>0.64</priority>
 </url>
 <url>
   <loc>https://darrenkeilty.github.io/pages/marketplace.html</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
-  <priority>0.64</priority>
-</url>
-<url>
-  <loc>https://darrenkeilty.github.io/assets/Resume.pdf</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
+  <lastmod>2026-04-01T22:56:12+00:00</lastmod>
   <priority>0.64</priority>
 </url>
 <url>
   <loc>https://darrenkeilty.github.io/pages/remote-work-report.html</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
+  <lastmod>2026-04-01T22:56:12+00:00</lastmod>
   <priority>0.51</priority>
 </url>
 <url>
   <loc>https://darrenkeilty.github.io/pages/remote-work-presentation.html</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
+  <lastmod>2026-04-01T22:56:12+00:00</lastmod>
   <priority>0.51</priority>
 </url>
 <url>
   <loc>https://darrenkeilty.github.io/pages/remote-work-code.html</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
+  <lastmod>2026-04-01T22:56:12+00:00</lastmod>
   <priority>0.51</priority>
 </url>
 <url>
   <loc>https://darrenkeilty.github.io/pages/corus-report.html</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
+  <lastmod>2026-04-01T22:56:12+00:00</lastmod>
   <priority>0.51</priority>
 </url>
 <url>
   <loc>https://darrenkeilty.github.io/pages/timeliness-report.html</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
+  <lastmod>2026-04-01T22:56:12+00:00</lastmod>
   <priority>0.51</priority>
 </url>
 <url>
   <loc>https://darrenkeilty.github.io/pages/timeliness-dashboard.html</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
+  <lastmod>2026-04-01T22:56:12+00:00</lastmod>
   <priority>0.51</priority>
-</url>
-<url>
-  <loc>https://darrenkeilty.github.io/projects/remote-work/Remote%20Work%20Environments%20-%20Report.pdf</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
-  <priority>0.41</priority>
-</url>
-<url>
-  <loc>https://darrenkeilty.github.io/projects/remote-work/Remote_Work_Presentation.pdf</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
-  <priority>0.41</priority>
-</url>
-<url>
-  <loc>https://darrenkeilty.github.io/projects/corus/corus_case_report.pdf</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
-  <priority>0.41</priority>
-</url>
-<url>
-  <loc>https://darrenkeilty.github.io/projects/timeliness/Timeliness%20Final%20Report.pdf</loc>
-  <lastmod>2026-03-22T18:17:32+00:00</lastmod>
-  <priority>0.41</priority>
 </url>
 
 
