@@ -43,12 +43,13 @@ const T = {
   // ── drivers — temperature ──
   tempLine:        '#b0281e',
   tempHotFill:     'rgba(176,40,30,0.20)',
-  tempColdFill:    'rgba(26,85,164,0.20)',
+  tempColdFill:    'rgba(176,40,30,0.14)',
   tempZero:        'rgba(22,46,74,0.18)',
   // ── drivers — outflow ──
   outflowBand:     'rgba(47,143,70,0.10)',
   outflowMean:     'rgba(47,143,70,0.42)',
-  outflow2017:     'rgba(200,78,20,0.52)',
+  outflow2017:     'rgba(200,78,20,0.34)',
+  outflowCapacity: 'rgba(22,46,74,0.42)',
   outflowSel:      '#2f8f46',
   outflowSelOther: '#63ad76',
   // ── drivers — lake level ──
@@ -75,6 +76,8 @@ let chartRows     = [];
 let stations      = [];
 let YEARS         = [];
 let byYear        = {};
+let sweDoyStats   = {};
+let tempDoyStats  = {};
 let levelDoyStats = {};
 let outflowDoyStats = {};
 let heatmap       = {};
@@ -121,6 +124,21 @@ function smooth(data, key, windowSize = 7) {
       .filter(v => v != null && !Number.isNaN(v));
     return slice.length ? d3.mean(slice) : null;
   });
+}
+
+function smoothStatsSeries(stats, windowSize = 7) {
+  const series = d3.range(365)
+    .map(doy => stats[doy] ? { doy, ...stats[doy] } : null)
+    .filter(Boolean);
+  const mean = smooth(series, 'mean', windowSize);
+  const lo = smooth(series, 'lo', windowSize);
+  const hi = smooth(series, 'hi', windowSize);
+  return series.map((d, i) => ({
+    ...d,
+    mean: mean[i] ?? d.mean,
+    lo: lo[i] ?? d.lo,
+    hi: hi[i] ?? d.hi
+  }));
 }
 
 function extentPad(values, padLow, padHigh) {
@@ -354,6 +372,8 @@ function processData() {
     YEARS.map(y => [y, chartRows.filter(d => d.year === y).sort((a, b) => a.doy - b.doy)])
   );
 
+  sweDoyStats     = computeStatsByDoy(chartRows, 'swe');
+  tempDoyStats    = computeStatsByDoy(chartRows, 'temp');
   levelDoyStats   = computeStatsByDoy(chartRows, 'level');
   outflowDoyStats = computeStatsByDoy(chartRows, 'outflow');
 
@@ -439,6 +459,17 @@ function returnToAllStations() {
   }
 }
 
+function flyToWithVerticalOffset(latlng, zoom, offsetY = 0, options = {}) {
+  if (!mapInstance) return;
+  if (!offsetY) {
+    mapInstance.flyTo(latlng, zoom, options);
+    return;
+  }
+  const targetPoint = mapInstance.project(latlng, zoom).subtract([0, offsetY]);
+  const targetLatLng = mapInstance.unproject(targetPoint, zoom);
+  mapInstance.flyTo(targetLatLng, zoom, options);
+}
+
 function initMap() {
   const realStations = stations.filter(
     d => d.station_key !== 'all' && d.latitude != null && d.longitude != null
@@ -456,13 +487,15 @@ function initMap() {
   mapInstance = L.map('map', {
     zoomControl: false,
     scrollWheelZoom: true,
-    attributionControl: true
+    attributionControl: true,
+    maxBoundsViscosity: 0.45,
+    minZoom: 8.5
   });
 
   L.control.zoom({ position: 'topright' }).addTo(mapInstance);
 
   L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/light_all/{z}/{y}/{x}{r}.png'.replace('{y}/{x}', '{x}/{y}'),
+    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{y}/{x}{r}.png'.replace('{y}/{x}', '{x}/{y}'),
     {
       maxZoom: 19,
       attribution:
@@ -481,6 +514,7 @@ function initMap() {
     ? L.latLngBounds(standalonePhotos.map(d => [d.latitude, d.longitude])).pad(0.22)
     : null;
 
+  mapInstance.setMaxBounds(mapBounds.pad(0.9));
   mapInstance.fitBounds(mapBounds);
 
   L.polyline(
@@ -616,8 +650,8 @@ function setActiveStation(stationKey) {
 
   const marker = markersByKey[stationKey];
   if (marker) {
-    mapInstance.flyTo(marker.getLatLng(), 10.6, { duration: 0.8 });
-    marker.openPopup();
+    mapInstance.once('moveend', () => marker.openPopup());
+    flyToWithVerticalOffset(marker.getLatLng(), 10.6, 110, { duration: 0.8 });
   }
 
   suppressPopupReset = false;
@@ -719,8 +753,8 @@ function renderTimeSeries() {
   g.append('text')
     .attr('x', pw + 8).attr('y', y(FULL_POOL_MASL) + 4)
     .attr('class', 'chart-annotation')
-    .attr('fill', T.fullPoolLabel)
-    .text('Full pool');
+    .attr('fill', T.outflowCapacity)
+    .text('Full Pool (342.48 m ASL)');
 
   monthStart.slice(1).forEach(doy => {
     g.append('line')
@@ -988,7 +1022,7 @@ function renderHeatmap() {
       .attr('font-size', 9.5)
       .attr('font-weight', '600')
       .attr('text-anchor', 'start')
-      .text('Full pool');
+      .text('342.48 (Full Pool)');
   }
 
   g.append('text')
@@ -1046,42 +1080,47 @@ function renderDrivers() {
   const monthStart = [0,   31,  59,  90, 120, 151, 181, 212, 243, 273, 304, 334];
 
   const yearData = byYear[state.selectedYear] || [];
+  const ref2017Data = byYear[2017] || [];
 
   const sweY0  = 0;
   const sweVals = chartRows.map(d => d.swe).filter(v => v != null);
   const sweMax  = Math.max(500, d3.max(sweVals) || 0);
   const sweY    = d3.scaleLinear().domain([0, sweMax]).range([sweY0 + panelH, sweY0]);
   const sweSmoothed = smooth(yearData, 'swe');
+  const ref2017SweSmoothed = smooth(ref2017Data, 'swe');
+  const sweBandData = smoothStatsSeries(sweDoyStats);
 
   drawPanel(g, 'SWE (mm)', sweY0, panelH, x, sweY, pw);
 
-  const meanSweByDoy = d3.rollups(
-    chartRows.filter(d => d.swe != null),
-    v  => d3.mean(v, d => d.swe),
-    d  => d.doy
-  ).map(([doy, val]) => ({ doy, val })).sort((a, b) => a.doy - b.doy);
-
-  g.append('path')
-    .datum(meanSweByDoy)
-    .attr('fill',   T.sweMeanFill)
-    .attr('stroke', T.sweMeanStroke)
-    .attr('stroke-width', 1)
+  g.append('path').datum(sweBandData)
+    .attr('fill', T.sweMeanFill).attr('stroke', 'none')
     .attr('d', d3.area()
       .x(d => x(d.doy))
-      .y0(sweY(0))
-      .y1(d => sweY(d.val || 0))
-      .defined(d => d.val != null)
+      .y0(d => sweY(Math.max(0, d.lo)))
+      .y1(d => sweY(Math.max(0, d.hi)))
       .curve(d3.curveBasis));
+
+  if (state.selectedYear !== 2017) {
+    g.append('path')
+      .datum(ref2017Data)
+      .attr('fill', 'none')
+      .attr('stroke', T.outflow2017).attr('stroke-width', 1.4)
+      .attr('d', d3.line()
+        .x(d => x(d.doy))
+        .y((d, i) => ref2017SweSmoothed[i] != null ? sweY(Math.max(0, ref2017SweSmoothed[i])) : null)
+        .defined((d, i) => ref2017SweSmoothed[i] != null)
+        .curve(d3.curveBasis));
+  }
 
   g.append('path')
     .datum(yearData)
-    .attr('fill',         T.sweArea)
+    .attr('fill',         'none')
     .attr('stroke',       T.sweLine)
-    .attr('stroke-width', 1.5)
-    .attr('d', d3.area()
+    .attr('stroke-width', 1.8)
+    .attr('d', d3.line()
       .x(d => x(d.doy))
-      .y0(sweY(0))
-      .y1((d, i) => sweY(Math.max(0, sweSmoothed[i] || 0)))
+      .y((d, i) => sweSmoothed[i] != null ? sweY(Math.max(0, sweSmoothed[i])) : null)
+      .defined((d, i) => sweSmoothed[i] != null)
       .curve(d3.curveBasis));
 
   const meltRow = yearData.find((d, i) =>
@@ -1109,6 +1148,8 @@ function renderDrivers() {
   const tMax = Math.max(35,  d3.max(tempVals) || 0);
   const tempY = d3.scaleLinear().domain([tMin, tMax]).range([tempY0 + panelH, tempY0]);
   const tempSmoothed = smooth(yearData, 'temp');
+  const ref2017TempSmoothed = smooth(ref2017Data, 'temp');
+  const tempBandData = smoothStatsSeries(tempDoyStats);
 
   drawPanel(g, 'Temp (°C)', tempY0, panelH, x, tempY, pw);
 
@@ -1117,31 +1158,28 @@ function renderDrivers() {
     .attr('y1', tempY(0)).attr('y2', tempY(0))
     .attr('stroke', T.tempZero).attr('stroke-dasharray', '3 3').attr('stroke-width', 1);
 
-  g.append('path').datum(yearData)
-    .attr('fill', T.tempHotFill).attr('stroke', 'none')
-    .attr('d', d3.area()
-      .x(d => x(d.doy)).y0(tempY(0))
-      .y1((d, i) => {
-        const v = tempSmoothed[i];
-        return v != null && v > 0 ? tempY(Math.min(tMax, v)) : tempY(0);
-      })
-      .defined((d, i) => tempSmoothed[i] != null)
-      .curve(d3.curveBasis));
-
-  g.append('path').datum(yearData)
+  g.append('path').datum(tempBandData)
     .attr('fill', T.tempColdFill).attr('stroke', 'none')
     .attr('d', d3.area()
-      .x(d => x(d.doy)).y0(tempY(0))
-      .y1((d, i) => {
-        const v = tempSmoothed[i];
-        return v != null && v < 0 ? tempY(Math.max(tMin, v)) : tempY(0);
-      })
-      .defined((d, i) => tempSmoothed[i] != null)
+      .x(d => x(d.doy))
+      .y0(d => tempY(clamp(d.lo, tMin, tMax)))
+      .y1(d => tempY(clamp(d.hi, tMin, tMax)))
       .curve(d3.curveBasis));
+
+  if (state.selectedYear !== 2017) {
+    g.append('path').datum(ref2017Data)
+      .attr('fill', 'none')
+      .attr('stroke', T.outflow2017).attr('stroke-width', 1.4)
+      .attr('d', d3.line()
+        .x(d => x(d.doy))
+        .y((d, i) => ref2017TempSmoothed[i] != null ? tempY(clamp(ref2017TempSmoothed[i], tMin, tMax)) : null)
+        .defined((d, i) => ref2017TempSmoothed[i] != null)
+        .curve(d3.curveBasis));
+  }
 
   g.append('path').datum(yearData)
     .attr('fill', 'none')
-    .attr('stroke', T.tempLine).attr('stroke-width', 1.5)
+    .attr('stroke', T.tempLine).attr('stroke-width', 1.8)
     .attr('d', d3.line()
       .x(d => x(d.doy))
       .y((d, i) => tempSmoothed[i] != null ? tempY(clamp(tempSmoothed[i], tMin, tMax)) : null)
@@ -1156,9 +1194,23 @@ function renderDrivers() {
 
   drawPanel(g, 'Outflow (m³/s)', outY0, panelH, x, outY, pw);
 
-  const outBandData = d3.range(365)
-    .map(doy => outflowDoyStats[doy] ? { doy, ...outflowDoyStats[doy] } : null)
-    .filter(Boolean);
+  const downstreamCapacity = 60;
+  if (downstreamCapacity >= outMin && downstreamCapacity <= outMax) {
+    g.append('line')
+      .attr('x1', 0).attr('x2', pw)
+      .attr('y1', outY(downstreamCapacity)).attr('y2', outY(downstreamCapacity))
+      .attr('stroke', T.outflowCapacity).attr('stroke-width', 1)
+      .attr('stroke-dasharray', '4 3');
+
+    g.append('text')
+      .attr('x', pw - 4).attr('y', outY(downstreamCapacity) - 4)
+      .attr('text-anchor', 'end')
+      .attr('class', 'chart-annotation')
+      .attr('fill', T.outflowCapacity)
+      .text('Downstream capacity (60 m³/s)');
+  }
+
+  const outBandData = smoothStatsSeries(outflowDoyStats);
 
   g.append('path').datum(outBandData)
     .attr('fill', T.outflowBand).attr('stroke', 'none')
@@ -1188,9 +1240,7 @@ function renderDrivers() {
 
   drawPanel(g, 'Lake level (m)', lvlY0, panelH, x, lvlY, pw);
 
-  const lvlBandData = d3.range(365)
-    .map(doy => levelDoyStats[doy] ? { doy, ...levelDoyStats[doy] } : null)
-    .filter(Boolean);
+  const lvlBandData = smoothStatsSeries(levelDoyStats);
 
   g.append('path').datum(lvlBandData)
     .attr('fill', T.levelBand).attr('stroke', 'none')
@@ -1203,20 +1253,27 @@ function renderDrivers() {
   g.append('line')
     .attr('x1', 0).attr('x2', pw)
     .attr('y1', lvlY(FULL_POOL_MASL)).attr('y2', lvlY(FULL_POOL_MASL))
-    .attr('stroke', T.fullPoolDrivers).attr('stroke-width', 1)
+    .attr('stroke', T.outflowCapacity).attr('stroke-width', 1)
     .attr('stroke-dasharray', '4 3');
+
+  g.append('text')
+    .attr('x', pw - 4).attr('y', lvlY(FULL_POOL_MASL) - 4)
+    .attr('text-anchor', 'end')
+    .attr('class', 'chart-annotation')
+    .attr('fill', T.outflowCapacity)
+    .text('Full Pool (342.48 m ASL)');
 
   if (state.selectedYear !== 2017) {
     g.append('path').datum(byYear[2017] || [])
       .attr('fill', 'none')
-      .attr('stroke', T.level2017Ref).attr('stroke-width', 1.5)
+      .attr('stroke', T.outflow2017).attr('stroke-width', 1.4)
       .attr('d', makeLine(x, lvlY, lvlMin, lvlMax, 'level'));
   }
 
-  const selColor = state.selectedYear === 2017 ? T.level2017 : T.levelSelected;
+  const selColor = T.levelSelected;
   g.append('path').datum(yearData)
     .attr('fill', 'none')
-    .attr('stroke', selColor).attr('stroke-width', 2)
+    .attr('stroke', selColor).attr('stroke-width', 1.8)
     .attr('d', makeLine(x, lvlY, lvlMin, lvlMax, 'level'));
 
   g.append('g').attr('class', 'axis')

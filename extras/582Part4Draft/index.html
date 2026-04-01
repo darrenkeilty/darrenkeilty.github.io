@@ -3,12 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Okanagan Lake — High Water Explorer</title>
+  <title>Okanagan Lake - High Water Explorer</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <!-- Playfair Display: editorial serif for display headings -->
-  <!-- DM Sans: clean, modern sans-serif for body / UI -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -61,7 +59,7 @@
         </div>
       </div>
 
-      <div class="map-status" id="map-status">CartoDB Positron · verified station coordinates</div>
+      <div class="map-status" id="map-status">Esri World Imagery with labels · verified station coordinates</div>
     </section>
 
     <!-- ── Section 1: Time series ─────────────────────────── -->
@@ -94,7 +92,7 @@
         <div class="chart-header">
           <div class="eyebrow">Year × Month · mean lake level (m above sea level)</div>
           <h2 class="section-title">Where do the peaks happen?</h2>
-          <p class="chart-desc">Each month cell is the average Kelowna lake level for that month and year, and the rightmost Peak column shows that year's highest daily level. Blue shows water below full pool, orange shows water above it, and white is centered on the full pool threshold. Click any row to highlight that year in the charts above and below.</p>
+          <p class="chart-desc">Each month cell is the average lake level for that month and year, and the rightmost Peak column shows that year's highest daily level. Blue shows water below full pool, orange shows water above it, and white is centered on the full pool threshold. Click any row to highlight that year in the charts above and below.</p>
         </div>
 
         <div class="chart-wrap">
@@ -102,7 +100,7 @@
         </div>
 
         <div class="heatmap-note muted-text small-text">
-          Lake level is shown in metres above sea level using station 08NM083 + 340.236 m offset. Full pool = 342.48 m asl.
+          Lake level is shown in metres above sea level using station 08NM083 + 340.236 m offset. Full pool = 342.48 m above sea level.
         </div>
       </div>
     </section>
@@ -113,13 +111,20 @@
         <div class="chart-header">
           <div class="eyebrow">Snowpack · Temperature · Outflow · Lake Level</div>
           <h2 class="section-title">What drives a high-water year?</h2>
-          <p class="chart-desc">Select a year to compare snowpack, air temperature, Penticton outflow, and Kelowna lake level through the season. In <span class="callout-2017">2017</span>, exceptional snowpack and spring warming aligned with sustained high outflow and elevated lake levels.</p>
+          <p class="chart-desc">Select a year to compare snowpack, air temperature, outflow, and lake level through the season. The shaded band shows the decade average ± one standard deviation. In <span class="callout-2017">2017</span>, exceptional snowpack and spring warming aligned with sustained high outflow and elevated lake levels.</p>
         </div>
-
         <div class="year-selector" id="year-selector-3"></div>
 
-        <div class="chart-wrap drivers-wrap">
-          <svg id="drivers-chart" role="img" aria-label="Driver variables by season" viewBox="0 0 900 620" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="drivers-layout">
+          <div class="drivers-icons" aria-hidden="true">
+            <div class="driver-icon driver-icon-swe"><span class="driver-icon-badge"></span><span class="driver-icon-label">Snowmelt</span></div>
+            <div class="driver-icon driver-icon-temp"><span class="driver-icon-badge"></span><span class="driver-icon-label">Temperature</span></div>
+            <div class="driver-icon driver-icon-outflow"><span class="driver-icon-badge"></span><span class="driver-icon-label">Outflow</span></div>
+            <div class="driver-icon driver-icon-level"><span class="driver-icon-badge"></span><span class="driver-icon-label">Lake Level</span></div>
+          </div>
+          <div class="chart-wrap drivers-wrap">
+            <svg id="drivers-chart" role="img" aria-label="Driver variables by season" viewBox="0 0 900 620" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
         </div>
       </div>
     </section>
