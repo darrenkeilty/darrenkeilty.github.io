@@ -37,8 +37,8 @@ const T = {
   // ── drivers — SWE ──
   sweArea:         'rgba(140,104,16,0.22)',
   sweLine:         '#8c6810',
-  sweMeanFill:     'rgba(140,104,16,0.09)',
-  sweMeanStroke:   'rgba(140,104,16,0.30)',
+  sweMeanFill:     'rgba(186, 158, 94, 0.18)',
+  sweMeanStroke:   'rgba(166,128,34,0.34)',
   snowmeltLine:    'rgba(140,104,16,0.38)',
   // ── drivers — temperature ──
   tempLine:        '#b0281e',
