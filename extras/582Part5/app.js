@@ -361,6 +361,16 @@ function initPhotoLightbox() {
   });
 }
 
+function initSourceDetails() {
+  document.addEventListener('click', event => {
+    const closeBtn = event.target.closest('.source-details-close');
+    if (!closeBtn) return;
+
+    const details = closeBtn.closest('.source-details');
+    if (details) details.open = false;
+  });
+}
+
 function buildStationMetaHtml(station, compact = false) {
   const titleStyle = compact
     ? 'font:600 12px/1.35 DM Sans,sans-serif;color:#162235;white-space:normal;overflow-wrap:anywhere;'
@@ -1776,6 +1786,10 @@ function renderImpacts() {
   g.append('line').attr('x1', 0).attr('x2', pw)
     .attr('y1', yCS).attr('y2', yCS)
     .attr('stroke', 'rgba(21,98,164,0.42)').attr('stroke-dasharray', '3 5').attr('stroke-width', 1.0);
+  // Lot grade at house
+  g.append('line').attr('x1', 0).attr('x2', pw)
+    .attr('y1', yGrF).attr('y2', yGrF)
+    .attr('stroke', 'rgba(100,75,40,0.40)').attr('stroke-dasharray', '3 5').attr('stroke-width', 1.0);
 
   // ── House drawing group ───────────────────────────────────────
   const hG = g.append('g').attr('class', 'impacts-house');
@@ -1998,6 +2012,7 @@ function renderImpacts() {
   const labelData = [
     { el: EL.fcl,        txt: `FCL  ${EL.fcl} m`,         color: 'rgba(22,46,74,0.82)', fw: '600', fs: 10.5 },
     { el: EL.crawlFloor, txt: `Crawlspace  ${EL.crawlFloor} m`, color: 'rgba(21,98,164,0.82)', fw: '500', fs: 9.5 },
+    { el: EL.gradeFront, txt: `Lot grade  ${EL.gradeFront} m`, color: 'rgba(100,75,40,0.78)', fw: '500', fs: 9.5 },
     { el: EL.fullPool,   txt: `Full pool  ${EL.fullPool} m`, color: T.fullPoolLabel,       fw: '600', fs: 10 },
   ];
   labelData.forEach(({ el, txt, color, fw, fs }) => {
@@ -2013,14 +2028,6 @@ function renderImpacts() {
       .attr('font-size', fs).attr('font-weight', fw)
       .text(txt);
   });
-  g.append('text')
-    .attr('x', houseL - 10).attr('y', yGrF - 8)
-    .attr('text-anchor', 'end')
-    .attr('fill', 'var(--muted)')
-    .attr('font-family', 'DM Sans, sans-serif')
-    .attr('font-size', 9.5)
-    .text('Lot grade');
-
   // ── Animated water level readout ─────────────────────────────
   const abovePool   = lv - EL.fullPool;
   const readoutAbove = wY > 26;
@@ -2109,6 +2116,7 @@ function initScroll() {
 async function init() {
   try {
     initPhotoLightbox();
+    initSourceDetails();
     await loadData();
     processData();
     initMap();

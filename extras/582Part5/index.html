@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Okanagan Lake - High Water Explorer</title>
+  <title>Okanagan Lake - Flood Exploration</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -38,6 +38,38 @@
 
       <div class="story-overlay" id="intro-overlay">
         <div class="eyebrow">Okanagan basin · Data Sourced from verified stations</div>
+        <details class="source-details">
+          <summary class="source-details-toggle" aria-label="View data details and citations">i</summary>
+          <div class="source-details-popover">
+            <button class="source-details-close" type="button" aria-label="Close data details">×</button>
+            <p class="source-details-title">Data details</p>
+            <p class="source-details-copy">
+              This dashboard uses a combined 2014–2024 daily dataset assembled from primary-source government stations below:
+            </p>
+            <ul class="source-details-list">
+              <li>Lake level: Water Survey of Canada station 08NM083, Okanagan Lake at Kelowna.</li>
+              <li>Outflow: Environment and Climate Change Canada Water Office historical daily flow for station 08NM050, Okanagan River at Penticton.</li>
+              <li>Snowpack: BC Snow Survey station 2F18P, Brenda Mine snow water equivalent (SWE).</li>
+              <li>Weather: ECCC climate station 1126146, Penticton A daily temperature and precipitation.</li>
+            </ul>
+            <p class="source-details-title source-details-subtitle">Key terms</p>
+            <ul class="source-details-list">
+              <li>ASL: Above sea level, the elevation reference used for lake levels and flood thresholds.</li>
+              <li>Full pool: The target full-lake level for Okanagan Lake, shown here as 342.48 m ASL.</li>
+              <li>Outflow: Water leaving Okanagan Lake through the Okanagan River, measured in m³/s at Penticton.</li>
+              <li>SWE: Snow water equivalent, the amount of liquid water stored in the snowpack if it melted.</li>
+              <li>FCL: Flood Construction Level, the minimum building elevation standard used for floodplain protection.</li>
+              <li>m³/s: Cubic metres per second, the standard unit for river discharge or flow.</li>
+            </ul>
+            <p class="source-details-copy source-details-links">
+              Sources:
+              <a href="https://collaboration.cmc.ec.gc.ca/cmc/hydrometrics/www/" target="_blank" rel="noreferrer">Water Survey of Canada archive</a>,
+              <a href="https://wateroffice.ec.gc.ca/report/historical_e.html?stn=08NM050&amp;dataType=Daily&amp;parameterType=Flow&amp;first_year=2014&amp;last_year=2024&amp;mode=Graph" target="_blank" rel="noreferrer">Water Office flow archive</a>,
+              <a href="https://api.weather.gc.ca/collections/climate-daily?lang=en" target="_blank" rel="noreferrer">ECCC GeoMet climate API</a>,
+              <a href="https://bcmoe-prod.aquaticinformatics.net/Data/Location/Summary/Location/2F18/Interval/Latest" target="_blank" rel="noreferrer">BC Snow Survey</a>.
+            </p>
+          </div>
+        </details>
         <h1 class="display-title">When Okanagan Lake<br><em>ran out of room</em></h1>
         <p>In 2017, Okanagan Lake reached its highest level on record, exceeding its full pool capacity of 342.48 meters above sea level.</p>
         <p class="muted-text">The following sections explore the factors contributing to this historic event, and identify seasonal trends in similar high water years.</p>
@@ -95,7 +127,7 @@
         <div class="chart-header">
           <div class="eyebrow">Year × Month · lake level relative to full pool (m)</div>
           <h2 class="section-title">Seasonal Patterns: When do peaks occur?</h2>
-          <p class="chart-desc">Each cell shows the average lake level for that month and year relative to lake capacity. Values above zero indicate months when the lake averaged above full pool, while negative values indicate levels below it. The Peak column highlights the highest daily exceedance recorded in each year, where late spring and early summer months stand out as higher-risk periods.</p>
+          <p class="chart-desc">Each cell shows the average lake level for that month and year relative to lake capacity. Values above zero indicate months when the lake averaged above full pool, while negative values indicate levels below it. The Peak column highlights the highest daily water level recorded in each year, where late spring and early summer months stand out as higher risk periods.</p>
         </div>
 
         <div class="chart-wrap">
@@ -137,7 +169,7 @@
         <div class="chart-header impacts-header">
           <div class="eyebrow">Representative shoreline house · animated daily lake level</div>
           <h2 class="section-title">What does this mean at the shoreline?</h2>
-          <p class="chart-desc">Lake levels are shown against a representative shoreline house built to modern floodplain standards, where the main floor remains above the mandated Flood Construction Level (FCL). In this illustrative example, only the 2017 high-water peak surpasses flooding thresholds for the simulated crawlspace level and lot grade. Actual shoreline homes vary considerably, and older or lower-elevation properties may experience flooding at lower lake levels than shown here.</p>
+          <p class="chart-desc">Lake levels are shown below against a representative shoreline house built to modern floodplain standards, where the main floor is at the mandated Flood Construction Level (FCL). In this example, only the 2017 peak surpasses flood thresholds for the simulated crawlspace and lot grade levels. Actual shoreline homes vary considerably, and older or lower elevation properties may experience flooding at lower lake levels than shown here.</p>
         </div>
 
         <div class="impacts-toolbar">
