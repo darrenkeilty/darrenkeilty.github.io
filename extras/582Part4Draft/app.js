@@ -6,7 +6,17 @@
 ────────────────────────────────────────────────────────────── */
 const FULL_POOL_MASL = 342.48;
 const LEVEL_OFFSET   = 340.236;
+const FLOOD_CONSTRUCTION_LEVEL  = 343.66;
+const IMPACTS_MAIN_FLOOR        = FLOOD_CONSTRUCTION_LEVEL;
+const IMPACTS_CRAWLSPACE_FLOOR  = FLOOD_CONSTRUCTION_LEVEL - 0.80;
+const IMPACTS_FINISHED_FLOOR    = 343.94;
+const IMPACTS_GRADE_AT_HOUSE    = 343.05;
+const IMPACTS_NATURAL_BOUNDARY  = 342.50;
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const OVERVIEW_MAP_BOUNDS = [
+  [49.40, -120.05],
+  [50.33, -119.15]
+];
 
 // Station colours — visible on CartoDB Positron light basemap
 const STATION_COLORS = {
@@ -66,9 +76,11 @@ const T = {
 const state = {
   selectedYear:   2017,
   currentSection: 0,
-  chartsInit: { 1: false, 2: false, 3: false },
+  chartsInit: { 1: false, 2: false, 3: false, 4: false },
   activeStationKey: 'all',
-  activePhotoId: 'all'
+  activePhotoId: 'all',
+  impactsDayIndex: 0,
+  impactsPlaying: false
 };
 
 let rawDaily      = [];
@@ -89,6 +101,10 @@ let photoMarkersById = {};
 let mapBounds     = null;
 let photoBounds   = null;
 let suppressPopupReset = false;
+let photoLightbox = null;
+let zoomSliderInput = null;
+let impactsTimer = null;
+let impactsSpeedMs = 120;
 
 /* ──────────────────────────────────────────────────────────────
    Tooltip
@@ -106,10 +122,20 @@ function showTip(html, event) {
 function moveTip(event) {
   const x = event.clientX + 16;
   const y = event.clientY - 10;
-  tooltip.style.left = Math.min(x, window.innerWidth - 240) + 'px';
+  const tipWidth = tooltip.offsetWidth || 320;
+  tooltip.style.left = Math.min(x, window.innerWidth - tipWidth - 16) + 'px';
   tooltip.style.top  = y + 'px';
 }
 function hideTip() { tooltip.style.opacity = '0'; }
+
+function escapeHtml(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 /* ──────────────────────────────────────────────────────────────
    Helpers
@@ -156,6 +182,25 @@ function fmt(v, digits, suffix) {
   return v == null ? '—' : (+v).toFixed(digits) + suffix;
 }
 
+function relativeToFullPool(v) {
+  return v == null ? null : v - FULL_POOL_MASL;
+}
+
+function fmtSignedMeters(v, digits = 2) {
+  if (v == null || Number.isNaN(v)) return '—';
+  const sign = v > 0 ? '+' : '';
+  return `${sign}${v.toFixed(digits)} m`;
+}
+
+function describeFullPoolOffset(v, digits = 3) {
+  if (v == null || Number.isNaN(v)) return '—';
+  if (Math.abs(v) < 10 ** (-digits) / 2) return `0.${'0'.repeat(digits)} m at full pool`;
+  const amount = Math.abs(v).toFixed(digits);
+  return v > 0
+    ? `+${amount} m above full pool`
+    : `-${amount} m below full pool`;
+}
+
 function approxMonthDay(year, doy) {
   const dt = new Date(year, 0, 1);
   dt.setDate(dt.getDate() + doy);
@@ -190,13 +235,130 @@ function buildPhotoCardHtml(photo, compact = false) {
   const capStyle = compact
     ? 'font:400 11px/1.45 DM Sans,sans-serif;color:#5c7285;white-space:normal;overflow-wrap:anywhere;'
     : 'font:400 12px/1.5 DM Sans,sans-serif;color:#5c7285;white-space:normal;overflow-wrap:anywhere;';
+  const triggerAttrs = [
+    'type="button"',
+    'class="photo-enlarge-trigger"',
+    `data-photo-src="${escapeHtml(photo.image_path)}"`,
+    `data-photo-title="${escapeHtml(title)}"`,
+    `data-photo-caption="${escapeHtml(caption)}"`,
+    `aria-label="Open larger version of ${escapeHtml(title)}"`
+  ].join(' ');
   return `
     <div style="width:${cardWidth};max-width:${cardWidth};white-space:normal;overflow-wrap:anywhere;word-break:break-word;">
       ${title ? `<div style="${titleStyle}">${title}</div>` : ''}
-      <img src="${photo.image_path}" alt="${title}" style="${imgStyle}">
+      <button ${triggerAttrs}>
+        <img src="${photo.image_path}" alt="${title}" style="${imgStyle}">
+        <span class="photo-enlarge-label">View larger</span>
+      </button>
       ${caption ? `<div style="${capStyle}">${caption}</div>` : ''}
     </div>
   `;
+}
+
+function closePhotoLightbox() {
+  if (!photoLightbox) return;
+  photoLightbox.classList.remove('is-open');
+  photoLightbox.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('lightbox-open');
+}
+
+function openPhotoLightbox({ src, title, caption }) {
+  if (!photoLightbox || !src) return;
+
+  const img = photoLightbox.querySelector('.photo-lightbox-image');
+  const titleEl = photoLightbox.querySelector('.photo-lightbox-title');
+  const captionEl = photoLightbox.querySelector('.photo-lightbox-caption');
+
+  img.src = src;
+  img.alt = title || 'Expanded map photo';
+  titleEl.textContent = title || 'Map photo';
+  captionEl.textContent = caption || '';
+  captionEl.hidden = !caption;
+
+  photoLightbox.classList.add('is-open');
+  photoLightbox.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('lightbox-open');
+}
+
+function syncZoomSlider() {
+  if (!mapInstance || !zoomSliderInput) return;
+  zoomSliderInput.value = mapInstance.getZoom().toFixed(1);
+}
+
+function addZoomSliderControl() {
+  if (!mapInstance) return;
+
+  const ZoomSliderControl = L.Control.extend({
+    options: { position: 'topright' },
+    onAdd() {
+      const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-zoomslider');
+      container.innerHTML = `
+        <div class="zoomslider-shell">
+          <input class="zoomslider-input" type="range" aria-label="Map zoom level">
+        </div>
+      `;
+
+      zoomSliderInput = container.querySelector('.zoomslider-input');
+      zoomSliderInput.min = mapInstance.getMinZoom().toFixed(1);
+      zoomSliderInput.max = mapInstance.getMaxZoom().toFixed(1);
+      zoomSliderInput.step = '0.1';
+      syncZoomSlider();
+
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.disableScrollPropagation(container);
+
+      zoomSliderInput.addEventListener('input', event => {
+        mapInstance.setZoom(+event.target.value);
+      });
+
+      return container;
+    }
+  });
+
+  mapInstance.addControl(new ZoomSliderControl());
+  mapInstance.on('zoomend', syncZoomSlider);
+}
+
+function initPhotoLightbox() {
+  photoLightbox = document.createElement('div');
+  photoLightbox.className = 'photo-lightbox';
+  photoLightbox.setAttribute('aria-hidden', 'true');
+  photoLightbox.innerHTML = `
+    <div class="photo-lightbox-backdrop" data-lightbox-close="true"></div>
+    <div class="photo-lightbox-dialog" role="dialog" aria-modal="true" aria-label="Expanded photo view">
+      <button type="button" class="photo-lightbox-close" aria-label="Close photo view">&times;</button>
+      <img class="photo-lightbox-image" src="" alt="">
+      <div class="photo-lightbox-meta">
+        <div class="photo-lightbox-title"></div>
+        <div class="photo-lightbox-caption"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(photoLightbox);
+
+  document.addEventListener('click', event => {
+    const trigger = event.target.closest('.photo-enlarge-trigger');
+    if (trigger) {
+      event.preventDefault();
+      event.stopPropagation();
+      openPhotoLightbox({
+        src: trigger.dataset.photoSrc,
+        title: trigger.dataset.photoTitle,
+        caption: trigger.dataset.photoCaption
+      });
+      return;
+    }
+
+    if (event.target.closest('[data-lightbox-close="true"]') || event.target.closest('.photo-lightbox-close')) {
+      closePhotoLightbox();
+    }
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && photoLightbox?.classList.contains('is-open')) {
+      closePhotoLightbox();
+    }
+  });
 }
 
 function buildStationMetaHtml(station, compact = false) {
@@ -251,6 +413,49 @@ function photoButtonLabel(photo) {
   return (photo.marker_label || photo.title || 'Photo')
     .replace(/\s*\(2017\)\s*/i, '')
     .trim();
+}
+
+function stopImpactsAnimation() {
+  if (impactsTimer) {
+    window.clearInterval(impactsTimer);
+    impactsTimer = null;
+  }
+  state.impactsPlaying = false;
+  const btn = document.getElementById('impact-play-btn');
+  if (btn) { btn.textContent = 'Play season'; btn.classList.remove('is-playing'); }
+}
+
+function updateImpactsControls(yearData) {
+  const slider = document.getElementById('impact-day-slider');
+  if (!slider || !yearData?.length) return;
+
+  slider.max = String(yearData.length - 1);
+  slider.value = String(state.impactsDayIndex);
+}
+
+function startImpactsAnimation() {
+  const yearData = (byYear[state.selectedYear] || []).filter(d => d.level != null);
+  if (!yearData.length) return;
+
+  stopImpactsAnimation();
+  state.impactsPlaying = true;
+
+  const playBtn = document.getElementById('impact-play-btn');
+  if (playBtn) { playBtn.textContent = 'Pause'; playBtn.classList.add('is-playing'); }
+
+  impactsTimer = window.setInterval(() => {
+    state.impactsDayIndex += 1;
+    if (state.impactsDayIndex >= yearData.length) state.impactsDayIndex = 0;
+    renderImpacts();
+  }, impactsSpeedMs);
+}
+
+function impactStageLabel(level) {
+  if (level >= IMPACTS_MAIN_FLOOR)       return 'Water at habitable floor';
+  if (level >= IMPACTS_GRADE_AT_HOUSE)   return 'Water above lot grade';
+  if (level >= IMPACTS_CRAWLSPACE_FLOOR) return 'Crawlspace flooding risk';
+  if (level >= FULL_POOL_MASL)           return 'Lake above full pool';
+  return 'Below full pool';
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -381,10 +586,12 @@ function processData() {
   yearPeak = {};
   YEARS.forEach(y => {
     heatmap[y]  = {};
-    yearPeak[y] = d3.max(byYear[y].map(d => d.level).filter(v => v != null));
+    yearPeak[y] = relativeToFullPool(
+      d3.max(byYear[y].map(d => d.level).filter(v => v != null))
+    );
     for (let m = 0; m < 12; m++) {
       const vals = byYear[y].filter(d => d.month === m).map(d => d.level).filter(v => v != null);
-      heatmap[y][m] = vals.length ? d3.mean(vals) : null;
+      heatmap[y][m] = vals.length ? relativeToFullPool(d3.mean(vals)) : null;
     }
   });
 }
@@ -486,10 +693,11 @@ function initMap() {
 
   mapInstance = L.map('map', {
     zoomControl: false,
-    scrollWheelZoom: true,
+    scrollWheelZoom: false,
     attributionControl: true,
     maxBoundsViscosity: 0.45,
-    minZoom: 8.5
+    maxZoom: 19,
+    zoomSnap: 0.1
   });
 
   L.control.zoom({ position: 'topright' }).addTo(mapInstance);
@@ -509,21 +717,18 @@ function initMap() {
     ...standalonePhotos.map(d => [d.latitude, d.longitude])
   ];
 
-  mapBounds = L.latLngBounds(latlngs).pad(0.22);
+  mapBounds = L.latLngBounds([
+    ...latlngs,
+    ...OVERVIEW_MAP_BOUNDS
+  ]).pad(0.08);
   photoBounds = standalonePhotos.length
     ? L.latLngBounds(standalonePhotos.map(d => [d.latitude, d.longitude])).pad(0.22)
     : null;
 
   mapInstance.setMaxBounds(mapBounds.pad(0.9));
   mapInstance.fitBounds(mapBounds);
-
-  L.polyline(
-    realStations
-      .slice()
-      .sort((a, b) => a.latitude - b.latitude)
-      .map(d => [d.latitude, d.longitude]),
-    { color: 'rgba(21,98,164,0.42)', weight: 1.8, dashArray: '5 6', opacity: 0.55 }
-  ).addTo(mapInstance);
+  mapInstance.setMinZoom(mapInstance.getZoom());
+  addZoomSliderControl();
 
   realStations.forEach(st => {
     const color = STATION_COLORS[st.station_key] || '#1562a4';
@@ -651,7 +856,7 @@ function setActiveStation(stationKey) {
   const marker = markersByKey[stationKey];
   if (marker) {
     mapInstance.once('moveend', () => marker.openPopup());
-    flyToWithVerticalOffset(marker.getLatLng(), 10.6, 110, { duration: 0.8 });
+    flyToWithVerticalOffset(marker.getLatLng(), 10.6, 145, { duration: 0.8 });
   }
 
   suppressPopupReset = false;
@@ -674,8 +879,8 @@ function setActivePhoto(photoId) {
 
   const marker = photoMarkersById[photoId];
   if (marker) {
-    mapInstance.flyTo(marker.getLatLng(), 11.2, { duration: 0.8 });
-    marker.openPopup();
+    mapInstance.once('moveend', () => marker.openPopup());
+    flyToWithVerticalOffset(marker.getLatLng(), 11.2, 125, { duration: 0.8 });
   }
 
   suppressPopupReset = false;
@@ -867,12 +1072,11 @@ function renderHeatmap() {
 
   const vMin = d3.min(allVals);
   const vMax = d3.max(allVals);
-  const fullPoolPivot = clamp(FULL_POOL_MASL, vMin, vMax);
-  const belowMid = vMin + (fullPoolPivot - vMin) * 0.5;
-  const aboveMid = fullPoolPivot + (vMax - fullPoolPivot) * 0.5;
+  const belowMid = vMin * 0.5;
+  const aboveMid = vMax * 0.5;
 
   const color = d3.scaleLinear()
-    .domain([vMin, belowMid, fullPoolPivot, aboveMid, vMax])
+    .domain([vMin, belowMid, 0, aboveMid, vMax])
     .range(['#1f5f99', '#9ecae1', '#ffffff', '#f8bf86', '#d97706'])
     .clamp(true);
 
@@ -918,16 +1122,24 @@ function renderHeatmap() {
         .attr('fill', textColor)
         .attr('font-family', 'DM Sans, sans-serif')
         .attr('font-size', 9.5)
-        .attr('font-weight', col.kind === 'peak' || val >= FULL_POOL_MASL ? '700' : '500')
+        .attr('font-weight', col.kind === 'peak' || val >= 0 ? '700' : '500')
         .style('pointer-events', 'none')
-        .text(val.toFixed(2));
+        .text((Math.abs(val) < 0.005 ? 0 : val).toFixed(2));
 
       cell.on('mouseenter', function(event) {
+        const aslValue = val + FULL_POOL_MASL;
+        const peakRow = col.kind === 'peak'
+          ? (byYear[year] || []).reduce(
+              (best, cur) => cur.level != null && cur.level > (best?.level ?? -Infinity) ? cur : best,
+              null
+            )
+          : null;
         d3.select(this).attr('stroke', T.cellStrokeHov).attr('stroke-width', 2);
         showTip(
           `<strong>${year} · ${col.label}</strong><br>` +
-          `${col.kind === 'peak' ? 'Annual daily peak' : 'Monthly mean'}: <strong>${val.toFixed(3)} m asl</strong>` +
-          `${col.kind === 'month' ? `<br><span style="color:${T.tipMuted}">Year peak: ${yearPeak[year].toFixed(3)} m</span>` : ''}`,
+          `${col.kind === 'peak' ? 'Annual daily peak' : 'Monthly mean'}: <strong>${aslValue.toFixed(3)} m ASL</strong>` +
+          `${peakRow ? `<br><span style="color:${T.tipMuted}">Peak day: ${approxMonthDay(year, peakRow.doy)}</span>` : ''}` +
+          `<br><span style="color:${T.tipMuted}">${describeFullPoolOffset(val, 3)}</span>`,
           event
         );
       });
@@ -987,8 +1199,9 @@ function renderHeatmap() {
 
   const tickValues = Array.from(new Set([
     +vMax.toFixed(2),
-    +((fullPoolPivot + vMax) / 2).toFixed(2),
-    +((vMin + fullPoolPivot) / 2).toFixed(2),
+    +aboveMid.toFixed(2),
+    0,
+    +belowMid.toFixed(2),
     +vMin.toFixed(2)
   ])).sort((a, b) => b - a);
 
@@ -998,11 +1211,11 @@ function renderHeatmap() {
     .call(
       d3.axisRight(legendScale)
         .tickValues(tickValues)
-        .tickFormat(d => d.toFixed(2))
+        .tickFormat(d => fmtSignedMeters(d, 2).replace(' m', ''))
     );
 
-  if (FULL_POOL_MASL >= vMin && FULL_POOL_MASL <= vMax) {
-    const fullPoolY = legendScale(FULL_POOL_MASL);
+  if (0 >= vMin && 0 <= vMax) {
+    const fullPoolY = legendScale(0);
 
     g.append('line')
       .attr('x1', legendX - 4)
@@ -1014,7 +1227,7 @@ function renderHeatmap() {
       .attr('stroke-dasharray', '4 3');
 
     g.append('text')
-      .attr('x', legendX + 26)
+      .attr('x', legendX + 60)
       .attr('y', fullPoolY)
       .attr('dy', '0.32em')
       .attr('fill', T.fullPoolLabel)
@@ -1022,18 +1235,18 @@ function renderHeatmap() {
       .attr('font-size', 9.5)
       .attr('font-weight', '600')
       .attr('text-anchor', 'start')
-      .text('342.48 (Full Pool)');
+      .text('Full Pool (342.48 m ASL)');
   }
 
   g.append('text')
-    .attr('x', legendX + 7)
+    .attr('x', legendX + 40)
     .attr('y', legendY - 10)
     .attr('text-anchor', 'middle')
     .attr('fill', 'var(--muted)')
     .attr('font-family', 'DM Sans, sans-serif')
     .attr('font-size', 9.5)
     .attr('letter-spacing', '0.04em')
-    .text('m asl');
+    .text('m from full pool');
 }
 
 // Sync year selection across all charts
@@ -1045,6 +1258,10 @@ function selectYearGlobal(year) {
   renderHeatmap();
   if (state.chartsInit[1]) renderTimeSeries();
   if (state.chartsInit[3]) renderDrivers();
+  if (state.chartsInit[4]) {
+    state.impactsDayIndex = 0;
+    renderImpacts();
+  }
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -1304,7 +1521,7 @@ function renderDrivers() {
       if (!row) return;
 
       showTip(
-        `<strong>${approxMonthDay(state.selectedYear, doy)} · ${state.selectedYear}</strong><br>` +
+        `<strong>${approxMonthDay(state.selectedYear, doy)}, ${state.selectedYear}</strong><br>` +
         `<span style="color:${T.sweLine}">SWE: ${fmt(row.swe, 0, ' mm')}</span><br>` +
         `<span style="color:${T.tempLine}">Temp: ${fmt(row.temp, 1, ' °C')}</span><br>` +
         `<span style="color:${T.outflowSel}">Outflow: ${fmt(row.outflow, 1, ' m³/s')}</span><br>` +
@@ -1337,6 +1554,523 @@ function drawPanel(g, label, y0, pH, x, yScale, pw) {
 }
 
 /* ──────────────────────────────────────────────────────────────
+   Section 4 — Impacts schematic
+────────────────────────────────────────────────────────────── */
+function initImpacts() {
+  buildYearSelector('year-selector-4', () => {
+    state.impactsDayIndex = 0;
+    stopImpactsAnimation();
+    selectYearGlobal(state.selectedYear);
+  });
+
+  const playBtn = document.getElementById('impact-play-btn');
+  if (playBtn) {
+    playBtn.addEventListener('click', () => {
+      if (state.impactsPlaying) {
+        stopImpactsAnimation();
+        return;
+      }
+      startImpactsAnimation();
+    });
+  }
+
+  const slider = document.getElementById('impact-day-slider');
+  if (slider) {
+    slider.addEventListener('input', event => {
+      state.impactsDayIndex = +event.target.value;
+      renderImpacts();
+    });
+  }
+
+  const speedSelect = document.getElementById('impact-speed');
+  if (speedSelect) {
+    speedSelect.value = String(impactsSpeedMs);
+    speedSelect.addEventListener('change', event => {
+      impactsSpeedMs = +event.target.value;
+      if (state.impactsPlaying) startImpactsAnimation();
+    });
+  }
+
+  renderImpacts();
+}
+
+function renderImpacts() {
+  const svg = d3.select('#impacts-chart');
+  svg.selectAll('*').remove();
+
+  const yearData = (byYear[state.selectedYear] || []).filter(d => d.level != null);
+  if (!yearData.length) return;
+  if (state.impactsDayIndex >= yearData.length) state.impactsDayIndex = 0;
+  const dayRow = yearData[state.impactsDayIndex];
+  updateImpactsControls(yearData);
+
+  const W = 900, H = 430;
+  const M = { top: 32, right: 188, bottom: 36, left: 58 };
+  const pw = W - M.left - M.right;
+  const ph = H - M.top - M.bottom;
+
+  // Reference elevations (m ASL)
+  const EL = {
+    fullPool:   342.48,
+    shore:      342.50,
+    crawlFloor: 342.86,
+    gradeFront: 343.05,
+    gradeRear:  343.15,
+    fcl:        343.66,
+    finFloor:   343.94,
+  };
+
+  const yMin = 341.20;
+  const yMax = 345.60;
+  const y = d3.scaleLinear().domain([yMin, yMax]).range([ph, 0]);
+  const g = svg.append('g').attr('transform', `translate(${M.left},${M.top})`);
+
+  // ── SVG defs: water gradient, sky gradient ──────────────────
+  const defs = svg.append('defs');
+
+  const waterGrad = defs.append('linearGradient')
+    .attr('id', 'imp-water-grad').attr('x1', '0').attr('y1', '0').attr('x2', '0').attr('y2', '1');
+  waterGrad.append('stop').attr('offset', '0%').attr('stop-color', '#4ea8d8').attr('stop-opacity', 0.55);
+  waterGrad.append('stop').attr('offset', '100%').attr('stop-color', '#1d72b8').attr('stop-opacity', 0.28);
+
+  const lotGrad = defs.append('linearGradient')
+    .attr('id', 'imp-lot-grad').attr('x1', '0').attr('y1', '0').attr('x2', '0').attr('y2', '1');
+  lotGrad.append('stop').attr('offset', '0%').attr('stop-color', '#c9a96e').attr('stop-opacity', 0.70);
+  lotGrad.append('stop').attr('offset', '100%').attr('stop-color', '#a07848').attr('stop-opacity', 0.85);
+
+  const wallGrad = defs.append('linearGradient')
+    .attr('id', 'imp-wall-grad').attr('x1', '0').attr('y1', '0').attr('x2', '0').attr('y2', '1');
+  wallGrad.append('stop').attr('offset', '0%').attr('stop-color', '#faf6ec');
+  wallGrad.append('stop').attr('offset', '100%').attr('stop-color', '#ede4cb');
+
+  const csGrad = defs.append('linearGradient')
+    .attr('id', 'imp-cs-grad').attr('x1', '0').attr('y1', '0').attr('x2', '0').attr('y2', '1');
+  csGrad.append('stop').attr('offset', '0%').attr('stop-color', '#d6c8a2');
+  csGrad.append('stop').attr('offset', '100%').attr('stop-color', '#c4b080');
+
+  const roofGrad = defs.append('linearGradient')
+    .attr('id', 'imp-roof-grad').attr('x1', '0').attr('y1', '0').attr('x2', '1').attr('y2', '1');
+  roofGrad.append('stop').attr('offset', '0%').attr('stop-color', '#7a4030');
+  roofGrad.append('stop').attr('offset', '100%').attr('stop-color', '#a05545');
+
+  // Flood water fill gradient
+  const floodGrad = defs.append('linearGradient')
+    .attr('id', 'imp-flood-grad').attr('x1', '0').attr('y1', '0').attr('x2', '0').attr('y2', '1');
+  floodGrad.append('stop').attr('offset', '0%').attr('stop-color', '#3a9fd6').attr('stop-opacity', 0.52);
+  floodGrad.append('stop').attr('offset', '100%').attr('stop-color', '#1a62a4').attr('stop-opacity', 0.28);
+
+  const lv  = dayRow.level;
+  const wY  = y(lv);
+
+  // ── Layout constants ─────────────────────────────────────────
+  const shoreX  = 130;
+  const houseL  = 360;
+  const houseR  = 565;
+  const hW      = houseR - houseL;
+  const hCentX  = houseL + hW / 2;
+
+  const yFP     = y(EL.fullPool);
+  const yShore  = y(EL.shore);
+  const yCS     = y(EL.crawlFloor);
+  const yGrF    = y(EL.gradeFront);
+  const yGrR    = y(EL.gradeRear);
+  const yFCL    = y(EL.fcl);
+  const yWallTop= y(EL.finFloor + 1.10);
+  const yPeak   = y(EL.finFloor + 2.00);
+
+  // ── Grid & y-axis ────────────────────────────────────────────
+  g.append('g').attr('class', 'grid')
+    .call(
+      d3.axisLeft(y)
+        .tickValues((() => {
+          const ticks = y.ticks(8);
+          const firstAboveFcl = ticks.find(v => v > EL.fcl);
+          return ticks.filter(v => v <= EL.fcl || v === firstAboveFcl);
+        })())
+        .tickSize(-pw)
+        .tickFormat(d => d.toFixed(1))
+    );
+
+  // ── Background sky band (above lot, below chart top) ─────────
+  // ── Lot / ground surface ─────────────────────────────────────
+  const lotSurfacePts = [
+    [shoreX, yShore],
+    [houseL, yGrF],
+    [houseR, yGrR],
+    [pw,     y(EL.gradeRear + 0.10)]
+  ];
+  // Fill below grade
+  g.append('path')
+    .attr('d', d3.line()(lotSurfacePts) + ` L ${pw},${ph + 4} L ${shoreX},${ph + 4} Z`)
+    .attr('fill', 'url(#imp-lot-grad)');
+  // Grade surface line
+  g.append('path')
+    .attr('d', d3.line()(lotSurfacePts))
+    .attr('fill', 'none')
+    .attr('stroke', '#7a5630')
+    .attr('stroke-width', 2.2)
+    .attr('stroke-linejoin', 'round');
+
+  // ── Lake water body (left of shore) ──────────────────────────
+  g.append('rect')
+    .attr('x', 0).attr('y', wY)
+    .attr('width', shoreX + 1).attr('height', ph - wY + 4)
+    .attr('fill', 'url(#imp-water-grad)');
+
+  // Water surface line in lake
+  g.append('line')
+    .attr('x1', 0).attr('x2', shoreX + 1)
+    .attr('y1', wY).attr('y2', wY)
+    .attr('stroke', '#1d72b8').attr('stroke-width', 2.2)
+    .attr('stroke-linecap', 'round');
+
+  // ── Retaining wall (simple grey rect at shore edge) ───────────
+  g.append('rect')
+    .attr('x', shoreX - 1).attr('y', yShore - 12)
+    .attr('width', 8).attr('height', ph - yShore + 16)
+    .attr('fill', '#888');
+
+  // ── Overland flooding (water overtops retaining wall, creeps up lot) ─
+  if (lv > EL.shore) {
+    // Interpolate how far across the lot the water reaches
+    let lotEdgeX;
+    if (lv >= EL.gradeFront) {
+      lotEdgeX = houseL;
+    } else {
+      const t = (lv - EL.shore) / (EL.gradeFront - EL.shore);
+      lotEdgeX = shoreX + t * (houseL - shoreX);
+    }
+
+    // Build flood polygon following grade surface then back along water line
+    const floodPoly = [[shoreX, yShore]];
+    if (lv >= EL.gradeFront) {
+      floodPoly.push([houseL, yGrF]);
+      floodPoly.push([houseL, wY]);
+    } else {
+      floodPoly.push([lotEdgeX, wY]);
+    }
+    floodPoly.push([shoreX, wY]);
+
+    g.append('polygon')
+      .attr('points', floodPoly.map(p => p.join(',')).join(' '))
+      .attr('fill', 'url(#imp-flood-grad)');
+
+    // Leading edge of flood water
+    g.append('line')
+      .attr('x1', shoreX).attr('x2', lotEdgeX)
+      .attr('y1', wY).attr('y2', wY)
+      .attr('stroke', '#1d72b8').attr('stroke-width', 2.2)
+      .attr('stroke-linecap', 'round');
+  }
+
+  // ── Reference level lines ─────────────────────────────────────
+  // Full pool
+  g.append('line').attr('x1', 0).attr('x2', pw)
+    .attr('y1', yFP).attr('y2', yFP)
+    .attr('stroke', T.fullPoolLine).attr('stroke-dasharray', '6 4').attr('stroke-width', 1.5);
+  // FCL
+  g.append('line').attr('x1', 0).attr('x2', pw)
+    .attr('y1', yFCL).attr('y2', yFCL)
+    .attr('stroke', 'rgba(22,46,74,0.32)').attr('stroke-dasharray', '5 3').attr('stroke-width', 1.2);
+  // Crawlspace floor
+  g.append('line').attr('x1', 0).attr('x2', pw)
+    .attr('y1', yCS).attr('y2', yCS)
+    .attr('stroke', 'rgba(21,98,164,0.42)').attr('stroke-dasharray', '3 5').attr('stroke-width', 1.0);
+
+  // ── House drawing group ───────────────────────────────────────
+  const hG = g.append('g').attr('class', 'impacts-house');
+
+  // — Roof (drawn first, sits behind chimney) —
+  const roofOverhang = 14;
+  const roofPts = [
+    [houseL - roofOverhang, yWallTop],
+    [hCentX, yPeak],
+    [houseR + roofOverhang, yWallTop]
+  ];
+  // Roof fill
+  hG.append('path')
+    .attr('d', d3.line()(roofPts) + ` L ${houseR + roofOverhang},${yWallTop} Z`)
+    .attr('fill', 'url(#imp-roof-grad)')
+    .attr('opacity', 0.88);
+  // Roof outline
+  hG.append('path')
+    .attr('d', `M ${houseL - roofOverhang},${yWallTop} L ${hCentX},${yPeak} L ${houseR + roofOverhang},${yWallTop}`)
+    .attr('fill', 'none')
+    .attr('stroke', '#5a2e22').attr('stroke-width', 2.2)
+    .attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round');
+  // Roof ridge highlight
+  hG.append('line')
+    .attr('x1', houseL - roofOverhang + 6).attr('x2', hCentX - 2)
+    .attr('y1', yWallTop + 3).attr('y2', yPeak + 2)
+    .attr('stroke', 'rgba(255,220,200,0.30)').attr('stroke-width', 3)
+    .attr('stroke-linecap', 'round');
+
+  // — Chimney —
+  const chimX = hCentX + 22;
+  const chimW = 14;
+  const chimTop = yPeak + 2;
+  const chimBot = yWallTop + 4;
+  hG.append('rect')
+    .attr('x', chimX).attr('y', chimTop)
+    .attr('width', chimW).attr('height', chimBot - chimTop)
+    .attr('fill', '#a06050').attr('stroke', '#5a2e22').attr('stroke-width', 1);
+  hG.append('rect')
+    .attr('x', chimX - 2).attr('y', chimTop - 4)
+    .attr('width', chimW + 4).attr('height', 5)
+    .attr('fill', '#7a4030');
+
+  // — Main wall (above FCL) —
+  hG.append('rect')
+    .attr('x', houseL).attr('y', yWallTop)
+    .attr('width', hW).attr('height', yFCL - yWallTop)
+    .attr('fill', 'url(#imp-wall-grad)')
+    .attr('stroke', 'rgba(82,64,44,0.65)').attr('stroke-width', 1.4);
+
+  // Wall shadow (right side)
+  hG.append('rect')
+    .attr('x', houseR - 4).attr('y', yWallTop)
+    .attr('width', 4).attr('height', yFCL - yWallTop)
+    .attr('fill', 'rgba(0,0,0,0.07)');
+
+  // — Crawlspace zone (below FCL, above crawl floor) —
+  hG.append('rect')
+    .attr('x', houseL).attr('y', yFCL)
+    .attr('width', hW).attr('height', yCS - yFCL)
+    .attr('fill', 'url(#imp-cs-grad)')
+    .attr('stroke', 'rgba(108,86,56,0.55)').attr('stroke-width', 1.2);
+
+  // Crawlspace inner face (slightly inset)
+  hG.append('rect')
+    .attr('x', houseL + 3).attr('y', yFCL + 2)
+    .attr('width', hW - 6).attr('height', yCS - yFCL - 4)
+    .attr('fill', 'rgba(210,192,148,0.65)');
+
+  // FCL floor beam (thick line at base of main floor)
+  hG.append('line')
+    .attr('x1', houseL).attr('x2', houseR)
+    .attr('y1', yFCL).attr('y2', yFCL)
+    .attr('stroke', '#5a3c1e').attr('stroke-width', 4);
+
+  // — Crawlspace vents —
+  const ventMidY = yFCL + (yCS - yFCL) * 0.52;
+  const ventCount = 4;
+  const ventSpacing = (hW - 20) / ventCount;
+  d3.range(ventCount).forEach(vi => {
+    const vx = houseL + 10 + vi * ventSpacing;
+    hG.append('rect')
+      .attr('x', vx).attr('y', ventMidY - 4)
+      .attr('width', 18).attr('height', 7)
+      .attr('fill', 'rgba(90,60,30,0.50)').attr('rx', 2).attr('ry', 2);
+    // vent grille lines
+    [0, 1, 2].forEach(gi => {
+      hG.append('line')
+        .attr('x1', vx + 4 + gi * 4).attr('x2', vx + 4 + gi * 4)
+        .attr('y1', ventMidY - 3).attr('y2', ventMidY + 3)
+        .attr('stroke', 'rgba(90,60,30,0.30)').attr('stroke-width', 0.7);
+    });
+  });
+
+  // — Grade extensions (foundation footing lines) —
+  hG.append('line')
+    .attr('x1', houseL - 14).attr('x2', houseL + 8)
+    .attr('y1', yGrF + 1).attr('y2', yGrF + 1)
+    .attr('stroke', 'rgba(100,75,40,0.55)').attr('stroke-width', 1.6);
+  hG.append('line')
+    .attr('x1', houseR - 8).attr('x2', houseR + 14)
+    .attr('y1', yGrR + 1).attr('y2', yGrR + 1)
+    .attr('stroke', 'rgba(100,75,40,0.55)').attr('stroke-width', 1.6);
+
+  // — Windows (main floor) —
+  const winTop    = yWallTop + 18;
+  const winH      = Math.max(22, yFCL - winTop - 70);
+  const winW      = 32;
+  const winPositions = [houseL + 18, hCentX - winW / 2 - 4, houseR - 18 - winW];
+  winPositions.forEach(xw => {
+    // Window frame
+    hG.append('rect')
+      .attr('x', xw - 1).attr('y', winTop - 1)
+      .attr('width', winW + 2).attr('height', winH + 2)
+      .attr('fill', 'rgba(82,64,44,0.45)').attr('rx', 1);
+    // Window glass
+    hG.append('rect')
+      .attr('x', xw).attr('y', winTop)
+      .attr('width', winW).attr('height', winH)
+      .attr('fill', '#c8e0ef').attr('rx', 1);
+    // Window pane dividers
+    hG.append('line')
+      .attr('x1', xw + winW / 2).attr('x2', xw + winW / 2)
+      .attr('y1', winTop).attr('y2', winTop + winH)
+      .attr('stroke', 'rgba(82,64,44,0.30)').attr('stroke-width', 1);
+    hG.append('line')
+      .attr('x1', xw).attr('x2', xw + winW)
+      .attr('y1', winTop + winH * 0.48).attr('y2', winTop + winH * 0.48)
+      .attr('stroke', 'rgba(82,64,44,0.30)').attr('stroke-width', 1);
+    // Window sill
+    hG.append('line')
+      .attr('x1', xw - 2).attr('x2', xw + winW + 2)
+      .attr('y1', winTop + winH + 2).attr('y2', winTop + winH + 2)
+      .attr('stroke', 'rgba(82,64,44,0.50)').attr('stroke-width', 1.5);
+    // Window glare highlight
+    hG.append('line')
+      .attr('x1', xw + 3).attr('x2', xw + winW * 0.4)
+      .attr('y1', winTop + 3).attr('y2', winTop + winH * 0.35)
+      .attr('stroke', 'rgba(255,255,255,0.45)').attr('stroke-width', 1.5)
+      .attr('stroke-linecap', 'round');
+  });
+
+  // — Front door —
+  const doorW  = 26;
+  const doorH  = 62;
+  const doorX  = hCentX - doorW / 2 + 22; // slightly off-centre (asymmetric facade)
+  hG.append('rect')
+    .attr('x', doorX - 1).attr('y', yFCL - doorH - 1)
+    .attr('width', doorW + 2).attr('height', doorH + 2)
+    .attr('fill', 'rgba(82,64,44,0.40)').attr('rx', 1);
+  hG.append('rect')
+    .attr('x', doorX).attr('y', yFCL - doorH)
+    .attr('width', doorW).attr('height', doorH)
+    .attr('fill', '#b8834e').attr('rx', 1);
+  // Door panel inset
+  hG.append('rect')
+    .attr('x', doorX + 4).attr('y', yFCL - doorH + 6)
+    .attr('width', doorW - 8).attr('height', (doorH - 10) * 0.45)
+    .attr('fill', 'none').attr('stroke', 'rgba(82,64,44,0.35)').attr('stroke-width', 0.8);
+  hG.append('rect')
+    .attr('x', doorX + 4).attr('y', yFCL - doorH + 6 + (doorH - 10) * 0.45 + 4)
+    .attr('width', doorW - 8).attr('height', (doorH - 10) * 0.45)
+    .attr('fill', 'none').attr('stroke', 'rgba(82,64,44,0.35)').attr('stroke-width', 0.8);
+  // Door knob
+  hG.append('circle')
+    .attr('cx', doorX + doorW - 7).attr('cy', yFCL - doorH * 0.40)
+    .attr('r', 2.2)
+    .attr('fill', '#d4a060');
+
+  // — Entry steps (stair on left side of door) —
+  const stepCount  = 4;
+  const stepRun    = 11;
+  const stepDrop   = (yGrF - yFCL) / stepCount;
+  const stairStartX = doorX - 4;
+  const stairPts = [];
+  for (let s = 0; s <= stepCount; s++) {
+    stairPts.push([stairStartX - s * stepRun,       yFCL + s * stepDrop]);
+    if (s < stepCount) {
+      stairPts.push([stairStartX - (s + 1) * stepRun, yFCL + s * stepDrop]);
+    }
+  }
+  hG.append('path')
+    .attr('d', d3.line()(stairPts))
+    .attr('fill', 'none')
+    .attr('stroke', 'rgba(100,78,44,0.62)').attr('stroke-width', 1.8)
+    .attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round');
+
+  // — Water inside crawlspace —
+  if (lv > EL.crawlFloor) {
+    const csWaterTop = Math.min(lv, EL.fcl);
+    const csWaterTopY = y(csWaterTop);
+    hG.append('rect')
+      .attr('x', houseL + 3).attr('y', csWaterTopY)
+      .attr('width', hW - 6).attr('height', yCS - csWaterTopY)
+      .attr('fill', 'rgba(42,124,198,0.45)');
+    hG.append('line')
+      .attr('x1', houseL + 3).attr('x2', houseR - 3)
+      .attr('y1', csWaterTopY).attr('y2', csWaterTopY)
+      .attr('stroke', '#1d72b8').attr('stroke-width', 1.6)
+      .attr('stroke-dasharray', '4 3');
+  }
+
+  // — Water inside main floor —
+  if (lv > EL.fcl) {
+    const mainWaterTop  = Math.min(lv, EL.finFloor + 0.5);
+    const mainWaterTopY = y(mainWaterTop);
+    hG.append('rect')
+      .attr('x', houseL + 3).attr('y', mainWaterTopY)
+      .attr('width', hW - 6).attr('height', yFCL - mainWaterTopY)
+      .attr('fill', 'rgba(42,124,198,0.35)');
+    hG.append('line')
+      .attr('x1', houseL + 3).attr('x2', houseR - 3)
+      .attr('y1', mainWaterTopY).attr('y2', mainWaterTopY)
+      .attr('stroke', '#1d72b8').attr('stroke-width', 1.6)
+      .attr('stroke-dasharray', '4 3');
+  }
+
+  // ── Annotation labels (right margin) ─────────────────────────
+  const lbX = houseR + 102;
+  const labelData = [
+    { el: EL.fcl,        txt: `FCL  ${EL.fcl} m`,         color: 'rgba(22,46,74,0.82)', fw: '600', fs: 10.5 },
+    { el: EL.crawlFloor, txt: `Crawlspace  ${EL.crawlFloor} m`, color: 'rgba(21,98,164,0.82)', fw: '500', fs: 9.5 },
+    { el: EL.fullPool,   txt: `Full pool  ${EL.fullPool} m`, color: T.fullPoolLabel,       fw: '600', fs: 10 },
+  ];
+  labelData.forEach(({ el, txt, color, fw, fs }) => {
+    // Tick mark
+    g.append('line')
+      .attr('x1', pw - 4).attr('x2', pw + 5)
+      .attr('y1', y(el)).attr('y2', y(el))
+      .attr('stroke', color).attr('stroke-width', 1.2);
+    g.append('text')
+      .attr('x', lbX).attr('y', y(el) + 4)
+      .attr('fill', color)
+      .attr('font-family', 'DM Sans, sans-serif')
+      .attr('font-size', fs).attr('font-weight', fw)
+      .text(txt);
+  });
+  g.append('text')
+    .attr('x', houseL - 10).attr('y', yGrF - 8)
+    .attr('text-anchor', 'end')
+    .attr('fill', 'var(--muted)')
+    .attr('font-family', 'DM Sans, sans-serif')
+    .attr('font-size', 9.5)
+    .text('Lot grade');
+
+  // ── Animated water level readout ─────────────────────────────
+  const abovePool   = lv - EL.fullPool;
+  const readoutAbove = wY > 26;
+  const readoutY    = readoutAbove ? wY - 10 : wY + 18;
+  const readoutBgH  = 18;
+  const readoutBgW  = 230;
+
+  g.append('rect')
+    .attr('x', 2).attr('y', readoutY - readoutBgH + 3)
+    .attr('width', readoutBgW).attr('height', readoutBgH)
+    .attr('fill', 'rgba(255,255,255,0.82)').attr('rx', 3);
+
+  g.append('text')
+    .attr('x', 8).attr('y', readoutY)
+    .attr('fill', '#1562a4')
+    .attr('font-family', 'DM Sans, sans-serif')
+    .attr('font-size', 11.5).attr('font-weight', '700')
+    .text(`${approxMonthDay(state.selectedYear, dayRow.doy)}, ${state.selectedYear} - ${lv.toFixed(3)} m ASL`);
+
+  // ── Disclaimer ────────────────────────────────────────────────
+  // ── Sidecar stats ─────────────────────────────────────────────
+  const depthAboveFCL = Math.max(0, lv - EL.fcl);
+  const boardFCL      = EL.fcl - lv;
+  const sidecar = document.getElementById('impacts-sidecar');
+  if (sidecar) {
+    const fclColor = depthAboveFCL > 0 ? 'color:#c84e14;font-weight:600;' : '';
+    sidecar.innerHTML = `
+      <div class="impact-stat-card">
+        <div class="impact-stat-label">Date</div>
+        <div class="impact-stat-value">${approxMonthDay(state.selectedYear, dayRow.doy)}, ${state.selectedYear}</div>
+      </div>
+      <div class="impact-stat-card">
+        <div class="impact-stat-label">Lake elevation</div>
+        <div class="impact-stat-value">${lv.toFixed(3)} m ASL</div>
+        <div class="impact-stat-sub">${describeFullPoolOffset(lv - EL.fullPool, 3)}</div>
+      </div>
+      <div class="impact-stat-card">
+        <div class="impact-stat-label">Impact stage</div>
+        <div class="impact-stat-value">${impactStageLabel(lv)}</div>
+        <div class="impact-stat-sub" style="${fclColor}">
+          ${depthAboveFCL > 0
+            ? `${depthAboveFCL.toFixed(3)} m above FCL`
+            : `${boardFCL.toFixed(3)} m below FCL`}
+        </div>
+      </div>
+    `;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
    Scroll / IntersectionObserver
 ────────────────────────────────────────────────────────────── */
 function initScroll() {
@@ -1354,6 +2088,8 @@ function initScroll() {
       if (idx === 1 && !state.chartsInit[1]) { state.chartsInit[1] = true; initTimeSeries(); }
       if (idx === 2 && !state.chartsInit[2]) { state.chartsInit[2] = true; initHeatmap();    }
       if (idx === 3 && !state.chartsInit[3]) { state.chartsInit[3] = true; initDrivers();    }
+      if (idx === 4 && !state.chartsInit[4]) { state.chartsInit[4] = true; initImpacts();    }
+      if (idx !== 4 && state.impactsPlaying) stopImpactsAnimation();
     });
   }, { root: scrollContainer, threshold: 0.55 });
 
@@ -1372,6 +2108,7 @@ function initScroll() {
 ────────────────────────────────────────────────────────────── */
 async function init() {
   try {
+    initPhotoLightbox();
     await loadData();
     processData();
     initMap();
