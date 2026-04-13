@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Okanagan Lake - High Water Explorer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <nav class="progress-nav" aria-label="Story sections">
+    <button class="dot active" data-section="0" title="Study stations">
+      <span class="dot-label">Map</span>
+    </button>
+    <button class="dot" data-section="1" title="Ten years of data">
+      <span class="dot-label">Ten Years</span>
+    </button>
+    <button class="dot" data-section="2" title="Year × Month heatmap">
+      <span class="dot-label">Patterns</span>
+    </button>
+    <button class="dot" data-section="3" title="What drives high water">
+      <span class="dot-label">Drivers</span>
+    </button>
+    <button class="dot" data-section="4" title="Shoreline impacts schematic">
+      <span class="dot-label">Impacts</span>
+    </button>
+  </nav>
+
+  <div class="scroll-container" id="scroll-container">
+
+    <!-- ── Section 0: Map ─────────────────────────────────── -->
+    <section class="story-section" id="section-0">
+      <div id="map"></div>
+
+      <div class="story-overlay" id="intro-overlay">
+        <div class="eyebrow">Okanagan basin · Data Sourced from verified stations</div>
+        <h1 class="display-title">When Okanagan Lake<br><em>ran out of room</em></h1>
+        <p>In 2017, Okanagan Lake reached its highest level on record, exceeding its full pool capacity of 342.48 meters above sea level.</p>
+        <p class="muted-text">The following sections explore the factors contributing to this historic event, and identify seasonal trends in similar high water years.</p>
+
+        <div class="station-note">
+          Click a chip to zoom to a station at which observations were collected:
+        </div>
+
+        <div class="scenario-row" id="scenario-row"></div>
+
+        <div class="station-note">
+          Select photos from high water events are also included:
+        </div>
+
+        <div class="scenario-row" id="scenario-row2"></div>
+
+        <div class="scroll-hint">
+          <span>Scroll to explore</span>
+          <svg width="14" height="20" viewBox="0 0 14 20" fill="none">
+            <path d="M7 1v16M1 11l6 7 6-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="map-status" id="map-status">Esri World Imagery with labels · verified station coordinates</div>
+    </section>
+
+    <!-- ── Section 1: Time series ─────────────────────────── -->
+    <section class="story-section chart-section" id="section-1">
+      <div class="chart-section-inner">
+        <div class="chart-header">
+          <div class="eyebrow">Daily observations · 2014 – 2024</div>
+          <h2 class="section-title">Ten years of lake levels</h2>
+          <p class="chart-desc">Select any year to trace its seasonal arc. The shaded band shows the decade average ± one standard deviation. <span class="callout-2017">2017</span> is always visible as a benchmark, where the lake greatly exceeded its full pool capacity of 342.48 metres above sea level (ASL). For reference, a one metre rise in lake level corresponds to a water volume increase of ~351 million cubic <br> metres (~140,000 olympic swimming pools).</p>
+        </div>
+
+        <div class="year-selector" id="year-selector-1"></div>
+
+        <div class="chart-wrap">
+          <svg id="timeseries-chart" role="img" aria-label="Lake level time series by year" viewBox="0 0 900 380" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+
+        <div class="chart-legend" id="ts-legend">
+          <span class="leg-item"><span class="leg-swatch" style="background:#1562a4"></span>Selected year</span>
+          <span class="leg-item"><span class="leg-swatch" style="background:#c84e14"></span>2017 (record)</span>
+          <span class="leg-item"><span class="leg-swatch leg-band"></span>Decade mean ± 1σ</span>
+          <span class="leg-item leg-line"><span class="leg-dash"></span>Full pool (342.48 m)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Section 2: Heatmap ─────────────────────────────── -->
+    <section class="story-section chart-section" id="section-2">
+      <div class="chart-section-inner">
+        <div class="chart-header">
+          <div class="eyebrow">Year × Month · lake level relative to full pool (m)</div>
+          <h2 class="section-title">Seasonal Patterns: When do peaks occur?</h2>
+          <p class="chart-desc">Each cell shows the average lake level for that month and year relative to lake capacity. Values above zero indicate months when the lake averaged above full pool, while negative values indicate levels below it. The Peak column highlights the highest daily exceedance recorded in each year, where late spring and early summer months stand out as higher-risk periods.</p>
+        </div>
+
+        <div class="chart-wrap">
+          <svg id="heatmap-chart" role="img" aria-label="Calendar heatmap of lake levels relative to full pool" viewBox="0 0 900 360" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+
+        <div class="heatmap-note muted-text small-text">
+          Values are shown in metres relative to full pool (342.48 m ASL). A value of zero marks full pool; positive values are above it and negative values are below it.
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Section 3: Drivers ─────────────────────────────── -->
+    <section class="story-section chart-section" id="section-3">
+      <div class="chart-section-inner">
+        <div class="chart-header">
+          <div class="eyebrow">Snowpack · Temperature · Outflow · Lake Level</div>
+          <h2 class="section-title">What drives a high-water year?</h2>
+          <p class="chart-desc">Select a year to compare snowpack, air temperature, outflow, and lake level through the season. The shaded band shows the decade average ± one standard deviation. In <span class="callout-2017">2017</span>, exceptional snowpack and spring warming aligned with sustained high outflow and elevated lake levels.</p>
+        </div>
+        <div class="year-selector" id="year-selector-3"></div>
+
+        <div class="drivers-layout">
+          <div class="drivers-icons" aria-hidden="true">
+            <div class="driver-icon driver-icon-swe"><span class="driver-icon-badge"></span><span class="driver-icon-label">Snowmelt</span></div>
+            <div class="driver-icon driver-icon-temp"><span class="driver-icon-badge"></span><span class="driver-icon-label">Temperature</span></div>
+            <div class="driver-icon driver-icon-outflow"><span class="driver-icon-badge"></span><span class="driver-icon-label">Outflow</span></div>
+            <div class="driver-icon driver-icon-level"><span class="driver-icon-badge"></span><span class="driver-icon-label">Lake Level</span></div>
+          </div>
+          <div class="chart-wrap drivers-wrap">
+            <svg id="drivers-chart" role="img" aria-label="Driver variables by season" viewBox="0 0 900 620" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="story-section chart-section" id="section-4">
+      <div class="chart-section-inner impacts-section-inner">
+        <div class="chart-header impacts-header">
+          <div class="eyebrow">Representative shoreline house · animated daily lake level</div>
+          <h2 class="section-title">What does this mean at the shoreline?</h2>
+          <p class="chart-desc">Lake levels are shown against a representative shoreline house built to modern floodplain standards, where the main floor remains above the mandated Flood Construction Level (FCL). In this illustrative example, only the 2017 high-water peak surpasses flooding thresholds for the simulated crawlspace level and lot grade. Actual shoreline homes vary considerably, and older or lower-elevation properties may experience flooding at lower lake levels than shown here.</p>
+        </div>
+
+        <div class="impacts-toolbar">
+          <div class="year-selector" id="year-selector-4"></div>
+          <div class="impacts-actions">
+            <button class="impact-play-btn" id="impact-play-btn" type="button">Play season</button>
+            <label class="impact-speed-wrap" for="impact-speed">
+              <span>Speed</span>
+              <select id="impact-speed" class="impact-speed-select">
+                <option value="220">0.5×</option>
+                <option value="120" selected>1×</option>
+                <option value="70">2×</option>
+                <option value="30">4×</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="impact-scrubber-wrap">
+          <input id="impact-day-slider" class="impact-day-slider" type="range" min="0" max="364" step="1" value="0" aria-label="Day of season">
+        </div>
+
+        <div class="impacts-layout">
+          <div class="chart-wrap impacts-wrap">
+            <svg id="impacts-chart" role="img" aria-label="Representative shoreline house impacts animation" viewBox="0 0 900 430" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+          <div class="impacts-sidecar" id="impacts-sidecar"></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="app.js"></script>
+</body>
+</html>
