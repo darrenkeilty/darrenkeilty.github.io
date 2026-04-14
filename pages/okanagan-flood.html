@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Okanagan Lake Flood Dashboard - Darren Keilty</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      background-color: #e8eef1;
+      font-family: 'Lora', serif;
+      color: #333;
+    }
+
+    .navbar {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      z-index: 1000;
+    }
+
+    .navbar a {
+      color: #9cb4c0;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: bold;
+      font-family: 'Segoe UI', sans-serif;
+      margin-left: 20px;
+      padding: 5px 10px;
+      transition: color 0.3s ease;
+    }
+
+    .navbar a:hover {
+      color: #c3cfd9;
+    }
+
+    .header {
+      text-align: center;
+      padding: 60px 20px;
+      background-color: #1d2c38;
+      background-image: url(../assets/Banner2.PNG);
+      background-position: center;
+      background-size: cover;
+      color: #9cb4c0;
+      position: relative;
+    }
+
+    .header h1 {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 40px;
+      margin: 0;
+      padding: 10px;
+    }
+
+    .header p {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 18px;
+      margin: 10px 0 0;
+    }
+
+    .section {
+      max-width: 1000px;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+
+    .section h2 {
+      color: #4b6b82;
+      font-family: 'Segoe UI', sans-serif;
+      margin-bottom: 20px;
+    }
+
+    .section p, li {
+      font-size: 16px;
+      line-height: 1.8;
+      color: #444;
+    }
+
+    .downloads {
+      margin: 30px 0;
+    }
+
+    .downloads a {
+      display: inline-block;
+      background-color: #4b6b82;
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 30px;
+      margin-right: 15px;
+      margin-bottom: 12px;
+      font-weight: bold;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+
+    .downloads a:hover {
+      background-color: #395466;
+    }
+
+    .visuals {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 40px;
+      margin-top: 40px;
+      padding: 0 20px;
+    }
+
+    .visuals a {
+      display: block;
+      transition: transform 0.3s ease;
+      border-radius: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .visuals a:hover {
+      transform: scale(1.02);
+    }
+
+    .visuals img {
+      width: 100%;
+      height: auto;
+      max-height: 350px;
+      border-radius: 10px;
+      object-fit: contain;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      background-color: white;
+      display: block;
+    }
+
+    .lightbox {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0,0,0,0.85);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .lightbox img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 10px;
+      box-shadow: 0 0 30px rgba(255,255,255,0.2);
+      object-fit: contain;
+    }
+
+    .lightbox:target {
+      display: flex;
+    }
+
+    .lightbox.is-open {
+      display: flex;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 30px;
+      right: 40px;
+      font-size: 40px;
+      color: #fff;
+      text-decoration: none;
+      font-family: sans-serif;
+      z-index: 10000;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .section {
+        padding: 0 15px;
+      }
+
+      .navbar {
+        top: 15px;
+        right: 15px;
+      }
+
+      .downloads a {
+        margin-top: 10px;
+        display: block;
+        margin-right: 0;
+      }
+
+      .visuals {
+        grid-template-columns: 1fr;
+        gap: 25px;
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <a href="../index.html">Home</a>
+    <a href="projects.html">Projects</a>
+    <a href="resume.html">Resume</a>
+  </div>
+
+  <div class="header">
+    <h1>Okanagan Lake Flood Dashboard</h1>
+    <p>An interactive dashboard exploring the drivers and impacts of extreme lake levels</p>
+  </div>
+
+  <div class="section">
+    <h2>Project Overview</h2>
+    <p>By Darren Keilty<br><em>CPSC 582 - Data Visualization Design and Development (Winter 2026)</em></p>
+
+    <p>
+      This project is an interactive web-based visualization built with D3.js and Leaflet that explores high water years on Okanagan Lake. The dashboard combines coordinated views of lake level, snowpack, temperature, outflow, and shoreline impacts so viewers can contextualize recent flood events and understand the environmental conditions behind them.
+    </p>
+
+    <p>
+      The final dashboard is designed as a story-driven experience with five sections: a map for station and photo context, a ten-year lake-level comparison, a seasonal heatmap of full-pool exceedance, a multi-variable drivers view, and a shoreline impacts simulation. The goal is to help educate a general audience about the environmental conditions and consequences behind these events.
+    </p>
+
+    <h2>Key Highlights</h2>
+    <ul>
+      <li>Uses 2014 to 2024 daily source data from government hydrometric, climate, and snow-survey stations to ground the narrative in real observations.</li>
+      <li>Frames lake levels relative to full pool so high-risk months and years are easier to interpret at a glance.</li>
+      <li>Connects snowpack, spring warming, outflow, and lake level in a coordi  nated view to explain why high-water years like 2017 stand out.</li>
+      <li>Adds a shoreline house simulation to translate metre-level water changes into a more concrete residential flooding scenario.</li>
+    </ul>
+
+    <div class="downloads">
+      <a href="../extras/582Part5/index.html">Open Dashboard</a>
+    </div>
+
+    <h2>Image Gallery</h2>
+    <p>
+      Captured during the height of the Okanagan’s high-water events, these images serve as the inspiration behind this project.
+    </p>
+
+    <div class="visuals">
+      <a href="#img1">
+        <img src="../projects/okanagan-flood/okanagan-flood-cover.jpg" alt="Okanagan Lake high-water cover image">
+      </a>
+      <a href="#img2">
+        <img src="../projects/okanagan-flood/kelowna-rotary.png" alt="Kelowna Rotary Beach during high water">
+      </a>
+      <a href="#img3">
+        <img src="../projects/okanagan-flood/sicamous-floating.jpg.png" alt="Floating structure during high water">
+      </a>
+      <a href="#img4">
+        <img src="../projects/okanagan-flood/road-damage.jpg" alt="Road damage from high water levels">
+      </a>
+    </div>
+
+    <div id="img1" class="lightbox">
+      <a href="#" class="lightbox-close" data-lightbox-close>&times;</a>
+      <img src="../projects/okanagan-flood/okanagan-flood-cover.jpg" alt="">
+    </div>
+    <div id="img2" class="lightbox">
+      <a href="#" class="lightbox-close" data-lightbox-close>&times;</a>
+      <img src="../projects/okanagan-flood/kelowna-rotary.png" alt="">
+    </div>
+    <div id="img3" class="lightbox">
+      <a href="#" class="lightbox-close" data-lightbox-close>&times;</a>
+      <img src="../projects/okanagan-flood/sicamous-floating.jpg.png" alt="">
+    </div>
+    <div id="img4" class="lightbox">
+      <a href="#" class="lightbox-close" data-lightbox-close>&times;</a>
+      <img src="../projects/okanagan-flood/road-damage.jpg" alt="">
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2025 Darren Keilty. All rights reserved.
+  </footer>
+
+  <script>
+    document.querySelectorAll('a[href^="#img"]').forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = document.querySelector(link.getAttribute("href"));
+        if (!target) {
+          return;
+        }
+        target.classList.add("is-open");
+      });
+    });
+
+    document.querySelectorAll("[data-lightbox-close]").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const lightbox = link.closest(".lightbox");
+        if (lightbox) {
+          lightbox.classList.remove("is-open");
+        }
+        const cleanUrl = window.location.pathname + window.location.search;
+        history.replaceState(null, "", cleanUrl);
+      });
+    });
+
+    document.querySelectorAll(".lightbox").forEach((lightbox) => {
+      lightbox.addEventListener("click", (event) => {
+        if (event.target === lightbox) {
+          lightbox.classList.remove("is-open");
+          const cleanUrl = window.location.pathname + window.location.search;
+          history.replaceState(null, "", cleanUrl);
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
