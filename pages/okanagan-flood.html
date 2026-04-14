@@ -140,15 +140,60 @@
       height: 100vh;
       background-color: rgba(0,0,0,0.85);
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
+      padding: 32px 20px;
+      overflow-y: auto;
+    }
+
+    .lightbox-content {
+      width: min(960px, 100%);
+      display: grid;
+      gap: 18px;
+      justify-items: center;
     }
 
     .lightbox img {
-      max-width: 90%;
-      max-height: 90%;
+      max-width: 100%;
+      max-height: 72vh;
       border-radius: 10px;
       box-shadow: 0 0 30px rgba(255,255,255,0.2);
       object-fit: contain;
+    }
+
+    .lightbox-caption {
+      width: 100%;
+      background-color: rgba(17, 24, 31, 0.92);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 16px 18px;
+      color: #d9e5ec;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+    }
+
+    .lightbox-caption strong {
+      display: block;
+      margin-bottom: 8px;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 17px;
+      color: #ffffff;
+    }
+
+    .lightbox-caption p {
+      margin: 0;
+      color: #d9e5ec;
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .lightbox-caption a {
+      color: #9cb4c0;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .lightbox-caption a:hover {
+      color: #c3cfd9;
+      text-decoration: underline;
     }
 
     .lightbox:target {
@@ -160,9 +205,9 @@
     }
 
     .lightbox-close {
-      position: absolute;
-      top: 30px;
-      right: 40px;
+      position: fixed;
+      top: 20px;
+      right: 20px;
       font-size: 40px;
       color: #fff;
       text-decoration: none;
@@ -219,7 +264,7 @@
     <p>By Darren Keilty<br><em>CPSC 582 - Data Visualization Design and Development (Winter 2026)</em></p>
 
     <p>
-      This project is an interactive web-based visualization built with D3.js and Leaflet that explores high water years on Okanagan Lake. The dashboard combines coordinated views of lake level, snowpack, temperature, outflow, and shoreline impacts so viewers can contextualize recent flood events and understand the environmental conditions behind them.
+      This project is an interactive web-based visualization built with D3.js and Leaflet that explores high water years on Okanagan Lake. As a resident of the region for many years, I wanted to create coordinated views of lake level, snowpack, temperature, outflow, and shoreline impacts so viewers can contextualize recent flood events and understand the environmental conditions behind them.
     </p>
 
     <p>
@@ -230,7 +275,7 @@
     <ul>
       <li>Uses 2014 to 2024 daily source data from government hydrometric, climate, and snow-survey stations to ground the narrative in real observations.</li>
       <li>Frames lake levels relative to full pool so high-risk months and years are easier to interpret at a glance.</li>
-      <li>Connects snowpack, spring warming, outflow, and lake level in a coordi  nated view to explain why high-water years like 2017 stand out.</li>
+      <li>Connects snowpack, spring warming, outflow, and lake level in a coordinated view to explain why high-water years like 2017 stand out.</li>
       <li>Adds a shoreline house simulation to translate metre-level water changes into a more concrete residential flooding scenario.</li>
     </ul>
 
@@ -240,7 +285,7 @@
 
     <h2>Image Gallery</h2>
     <p>
-      Captured during the height of the Okanagan’s high-water events, these images serve as the inspiration behind this project.
+      Captured during the height of the Okanagan Lake high-water events, these images serve as the inspiration behind this project.
     </p>
 
     <div class="visuals">
@@ -260,19 +305,43 @@
 
     <div id="img1" class="lightbox">
       <a href="#" class="lightbox-close" data-lightbox-close>&times;</a>
-      <img src="../projects/okanagan-flood/okanagan-flood-cover.jpg" alt="">
+      <div class="lightbox-content">
+        <img src="../projects/okanagan-flood/okanagan-flood-cover.jpg" alt="">
+        <div class="lightbox-caption">
+          <strong>Middle Vernon Creek flood conditions in Lake Country</strong>
+          <p>This shoreline home reflects the broader flooding conditions documented near Lake Country&rsquo;s Middle Vernon Creek.<a href="https://letstalk.lakecountry.bc.ca/mvcfloodstudy/widgets/131083/photos" target="_blank" rel="noopener noreferrer"> View Source</a></p>
+        </div>
+      </div>
     </div>
     <div id="img2" class="lightbox">
       <a href="#" class="lightbox-close" data-lightbox-close>&times;</a>
-      <img src="../projects/okanagan-flood/kelowna-rotary.png" alt="">
+      <div class="lightbox-content">
+        <img src="../projects/okanagan-flood/kelowna-rotary.png" alt="">
+        <div class="lightbox-caption">
+          <strong>Waves pushing into flood barriers on Okanagan Lake</strong>
+          <p>Global News describes how strong winds in June 2017 turned already elevated lake levels into a much more visible hazard. With Okanagan Lake sitting well above full pool, wave action pushed into protected shoreline areas and added pressure to docks, barriers, and waterfront infrastructure. <a href="https://globalnews.ca/news/3526140/gusty-winds-create-spectacle-on-overflowing-okanagan-lake/" target="_blank" rel="noopener noreferrer">View Source</a></p>
+        </div>
+      </div>
     </div>
     <div id="img3" class="lightbox">
       <a href="#" class="lightbox-close" data-lightbox-close>&times;</a>
-      <img src="../projects/okanagan-flood/sicamous-floating.jpg.png" alt="">
+      <div class="lightbox-content">
+        <img src="../projects/okanagan-flood/sicamous-floating.jpg.png" alt="">
+        <div class="lightbox-caption">
+          <strong>High water around the S.S. Sicamous in Penticton</strong>
+          <p>The S.S. Sicamous Marine Heritage Society reflects on how extraordinary the 2017 flood became at Penticton&rsquo;s waterfront. As lake levels rose, the 103 year-old ship floated for the first time since it was beached in 1936 and converted into a museum. <a href="https://www.sssicamous.ca/blog/flooding-in-the-okanagan" target="_blank" rel="noopener noreferrer">View Source</a></p>
+        </div>
+      </div>
     </div>
     <div id="img4" class="lightbox">
       <a href="#" class="lightbox-close" data-lightbox-close>&times;</a>
-      <img src="../projects/okanagan-flood/road-damage.jpg" alt="">
+      <div class="lightbox-content">
+        <img src="../projects/okanagan-flood/road-damage.jpg" alt="">
+        <div class="lightbox-caption">
+          <strong>Wave damage along the Peachland shoreline</strong>
+          <p>CBC&rsquo;s article highlights how high water combined with strong wave action undermined Highway 97 road infrastructure near Peachland. <a href="https://www.cbc.ca/news/canada/british-columbia/peachland-wave-damage-1.4152818" target="_blank" rel="noopener noreferrer">View Source</a></p>
+        </div>
+      </div>
     </div>
   </div>
 
