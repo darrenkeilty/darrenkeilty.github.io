@@ -30,7 +30,7 @@
         /* Banner Section */
         .banner {
             position: relative;
-            background-image: url('assets/Banner3.PNG');
+            background-image: url('assets/Banner4.PNG');
             height: 400px;
             background-position: center;
             background-size: cover;
@@ -39,6 +39,14 @@
             align-items: center;
             border-bottom: 8px solid #4b6b82;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .banner::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(6, 12, 16, 0.2) 0%, rgba(6, 12, 16, 0.42) 100%);
         }
 
         /* Navigation links on banner */
@@ -46,6 +54,7 @@
             position: absolute;
             top: 20px;
             right: 30px;
+            z-index: 2;
         }
 
         .navbar a {
@@ -60,6 +69,20 @@
 
         .navbar a:hover {
             color: #c3cfd9;
+        }
+
+        .banner-title {
+            font-family: 'Poppins', sans-serif;
+            position: relative;
+            z-index: 1;
+            margin: 0;
+            padding: 0 24px;
+            color: #b7d6ea;
+            font-size: clamp(3.6rem, 9vw, 7.0rem);
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            text-align: center;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
         }
 
 
@@ -150,6 +173,17 @@
             .banner {
                 height: 300px;
             }
+
+            .navbar {
+                top: 16px;
+                right: 18px;
+            }
+
+            .navbar a {
+                margin-left: 10px;
+                font-size: 14px;
+            }
+
             .about-me {
                 padding: 30px;
             }
@@ -164,6 +198,7 @@
             <a href="pages/projects.html">Projects</a>
             <a href="pages/resume.html">Resume</a>
         </div>
+        <h1 class="banner-title">Darren Keilty</h1>
     </div>
 
     <!-- Content section -->
