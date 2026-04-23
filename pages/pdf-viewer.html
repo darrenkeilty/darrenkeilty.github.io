@@ -289,7 +289,7 @@
 
     <header class="header">
       <div class="header-left">
-        <a id="back-link" class="back-link" href="../index.html">
+        <a id="back-link" class="back-link" href="/">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 2L4 7l5 5"/>
           </svg>
@@ -334,7 +334,7 @@
       const params    = new URLSearchParams(window.location.search);
       const file      = params.get("file");
       const title     = params.get("title") || "PDF Viewer";
-      const back      = params.get("back") || "../index.html";
+      const back      = params.get("back") || "/";
       const backLabel = params.get("backLabel") || "Back";
 
       document.getElementById("viewer-title").textContent = title;
