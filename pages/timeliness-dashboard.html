@@ -38,7 +38,7 @@
     }
 
     .shell {
-      width: min(1120px, calc(100% - 40px));
+      width: min(1380px, calc(100% - 40px));
       margin: 0 auto;
       padding: 36px 0 64px;
     }
@@ -132,10 +132,12 @@
 
     .dashboard-container {
       width: 100%;
+      max-width: 1440px;
+      margin: 0 auto;
       border-radius: 6px;
       overflow: hidden;
       border: 1px solid var(--border);
-      background: var(--surface);
+      background: #0f171d;
       box-shadow: var(--page-shadow);
     }
 
@@ -143,12 +145,15 @@
       position: relative;
       width: 100%;
       min-height: 1300px;
-      background: #111;
+      margin: 0 auto;
+      background: #0f171d;
     }
 
     .tableauViz {
+      display: block;
       width: 100%;
       height: 100%;
+      margin: 0 auto;
     }
 
     @media (max-width: 1024px) {
@@ -232,6 +237,14 @@
 
   <script type="text/javascript">
     function getDashboardHeight(width) {
+      if (width >= 1440) {
+        return 1440;
+      }
+
+      if (width >= 1320) {
+        return 1360;
+      }
+
       if (width >= 1200) {
         return 1320;
       }
@@ -258,8 +271,11 @@
       const height = getDashboardHeight(width);
 
       placeholder.style.minHeight = height + "px";
-      vizElement.style.width = "100%";
+      vizElement.style.width = width + "px";
       vizElement.style.height = height + "px";
+      vizElement.style.maxWidth = "100%";
+      vizElement.style.margin = "0 auto";
+      vizElement.style.display = "block";
     }
 
     function initTableau() {
